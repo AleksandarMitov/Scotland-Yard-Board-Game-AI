@@ -64,7 +64,14 @@ GameMessenger.prototype.interpretRegistered = function (messageRegistered) {
  * @param messageReady the READY message.
  */
 GameMessenger.prototype.interpretReady = function (messageReady) {
-  //TODO:
+    guiConnector.setTicketView(messageReady['rounds'], messageReady['current_round']);
+    guiConnector.setPlayerLocations(messageReady['locations']);
+    guiConnector.setPlayerTickets(messageReady['tickets']);
+    guiConnector.setSetUpViewVisible(false);
+    if(aiMessenger.isConnected() && AIPlayers.length > 0) {
+        aiMessenger.sendMessage(messageReady);
+    }
+    this.sendMessage(messageReady);
 };
 
 /**
@@ -83,7 +90,42 @@ GameMessenger.prototype.interpretPendingGame = function (messagePendingGame) {
  * @param messageNotify the NOTIFY message.
  */
 GameMessenger.prototype.interpretNotify = function (messageNotify) {
-  //TODO:
+    var moveType = messageNotify['move_type'];
+    var whichPlayer = messageNotify.move.colour;
+    switch(moveType) {
+        case "MoveTicket":
+            var ticketType = messageNotify.move.ticket;
+            var target = messageNotify.move.target;
+            if(whichPlayer == "Black") {
+                guiConnector.updateTicketView(ticketType, target);
+            }
+            guiConnector.animatePlayer(whichPlayer, target);
+            guiConnector.removeTicket(whichPlayer, ticketType);
+            break;
+        case "MoveDouble":
+            var ticketType = "Double";
+            if(whichPlayer == "Black") {
+                guiConnector.updateTicketView(messageNotify.move.move1.ticket, messageNotify.move.move1.target);
+                guiConnector.updateTicketView(messageNotify.move.move2.ticket, messageNotify.move.move2.target);
+            }
+            guiConnector.removeTicket(whichPlayer, ticketType);
+            break;
+        case "MovePass":
+            var ticketType = messageNotify.move.ticket;
+            var target = messageNotify.move.target;
+            if(whichPlayer == "Black") {
+                guiConnector.updateTicketView(ticketType, target);
+            }
+            break;
+        default:
+            if(debug) {
+                console.log("error while handling ticket");
+            }
+            break;
+    }
+    if(aiMessenger.isConnected() && AIPlayers.length > 0) {
+        aiMessenger.sendMessage(messageNotify);
+    }
 };
 
 /**
@@ -93,7 +135,10 @@ GameMessenger.prototype.interpretNotify = function (messageNotify) {
  * @param messageGameOver the GAME_OVER message.
  */
 GameMessenger.prototype.interpretGameOver = function (messageGameOver) {
-  //TODO:
+    guiConnector.setGameOver(messageGameOver);
+    if(aiMessenger.isConnected() && AIPlayers.length > 0) {
+        aiMessenger.sendMessage(messageGameOver);
+    }
 };
 
 /**
@@ -112,7 +157,13 @@ GameMessenger.prototype.interpretGames = function (messageGames) {
  * @param messageConnection the CONNECTION message.
  */
 GameMessenger.prototype.interpretConnection = function (messageConnection) {
-  //TODO:
+    var host = messageConnection.host;
+    var port = messageConnection.port;
+    var messageToSend = {};
+    messageToSend['type'] = 'SPECTATE';
+    messageToSend['game_id'] = guiConnector.getSelectedGame();
+    this.changeConnection("ws://" + host + ":" + port);
+    this.sendMessage(messageToSend);
 };
 
 /**
@@ -122,7 +173,11 @@ GameMessenger.prototype.interpretConnection = function (messageConnection) {
  * @param messageNotifyTurn the NOTIFY_TURN message.
  */
 GameMessenger.prototype.interpretNotifyTurn = function (messageNotifyTurn) {
-  //TODO:
+    var whichPlayer = messageNotifyTurn['valid_moves'][0]['move']['colour'];
+    guiConnector.startTurn(messageNotifyTurn);
+    if(aiMessenger.isConnected() && AIPlayers.indexOf(whichPlayer) != -1) {
+        aiMessenger.sendMessage(messageNotifyTurn);
+    }
 };
 
 /**
