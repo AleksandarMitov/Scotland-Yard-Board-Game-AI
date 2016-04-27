@@ -174,10 +174,13 @@ GameMessenger.prototype.interpretConnection = function (messageConnection) {
  */
 GameMessenger.prototype.interpretNotifyTurn = function (messageNotifyTurn) {
     var whichPlayer = messageNotifyTurn['valid_moves'][0]['move']['colour'];
-    guiConnector.startTurn(messageNotifyTurn);
     if(aiMessenger.isConnected() && AIPlayers.indexOf(whichPlayer) != -1) {
         aiMessenger.sendMessage(messageNotifyTurn);
+		guiConnector.startTurn(messageNotifyTurn, true);
     }
+	else {
+		guiConnector.startTurn(messageNotifyTurn, false);
+	}
 };
 
 /**
