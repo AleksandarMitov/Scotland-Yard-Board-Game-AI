@@ -4,6 +4,7 @@ var AIPlayers = ["Black"];
 
 var gameId;
 
+var board = {};
 var guiConnector = new GUIConnector();
 var gameMessenger = new GameMessenger();
 var aiMessenger = new AIMessenger();
@@ -15,7 +16,7 @@ function sendEnquire () {
 }
 
 function requestConnection () {
-  var gameId = + guiConnector.testContainer.getSelectedGame();
+  var gameId = guiConnector.testContainer.getSelectedGame();
   var requestMessage = {};
   requestMessage['type'] = 'REQUEST_CONNECTION';
   requestMessage['game_id'] = gameId;

@@ -30,7 +30,23 @@
         <div id="setUpGame">
           <form id="joinForm">
             <label>Team Name:</label><br/>
-            <input class="teamField" name="teamField" type="text"></input><br/><br/>
+            <input class="teamField" name="teamField" type="text"></input>
+            <button id="joinButton" type="submit">Join</button><br/><br/>
+          </form>
+          <form id="matchmakerForm">
+            <label class="subheader">Matchmaker connection:</label><br/>
+            <label class="settingsLabel">Host</label>
+            <input class="connectionField" name="hostField" type="text"></input>
+            <label class="settingsLabel">Port</label>
+            <input class="connectionField" name="portField" type="text"></input>
+            <button id="matchmakerButton" type="submit">Connect</button><br/><br/>
+          </form>
+          <form id="aiForm">
+            <label class="subheader">AI connection:</label><br/>
+            <label class="settingsLabel">Host</label>
+            <input class="connectionField" name="hostField" type="text"></input>
+            <label class="settingsLabel">Port</label>
+            <input class="connectionField" name="portField" type="text"></input>
             <label class="subheader">AI Players:</label><br/>
             <div id="checkboxColumn">
               <input class="checkbox" type="checkbox" name="Black_Checkbox" value="Black"></input>
@@ -48,23 +64,6 @@
               <input class="checkbox" type="checkbox" name="White_Checkbox" value="White"></input>
               <label class="settingsLabel">White</label><br/>
             </div>
-            <button id="joinButton" type="submit">Join</button>
-          </form>
-          <form id="matchmakerForm">
-            <label class="subheader">Matchmaker connection:</label><br/>
-            <label class="settingsLabel">Host</label>
-            <input class="connectionField" name="hostField" type="text"></input>
-            <label class="settingsLabel">Port</label>
-            <input class="connectionField" name="portField" type="text"></input>
-            <button id="matchmakerButton" type="submit">Connect</button><br/><br/>
-          </form>
-          <form id="aiForm">
-            <label class="subheader">AI connection:</label><br/>
-            <label class="settingsLabel">Host</label>
-            <input class="connectionField" name="hostField" type="text"></input>
-            <label class="settingsLabel">Port</label>
-            <input class="connectionField" name="portField" type="text"></input>
-            <button id="aiButton" type="submit">Connect</button><br/>
           </form>
         </div>
         <div id="setUpSpectate">
@@ -97,13 +96,13 @@
       </div>
       <canvas id="timer" class="flex"></canvas>
       <div id="players">
-        <canvas id="redPlayer" class="fixed"></canvas>
-        <canvas id="yellowPlayer" class="fixed"></canvas>
-        <canvas id="greenPlayer" class="fixed"></canvas>
-        <canvas id="bluePlayer" class="fixed"></canvas>
-        <canvas id="whitePlayer" class="fixed"></canvas>
-        <canvas id="blackPlayer" class="fixed small"></canvas>
         <canvas id="tickets" class="inline-flex"></canvas>
+        <canvas id="blackPlayer" class="fixed small"></canvas>
+        <canvas id="bluePlayer" class="fixed"></canvas>
+        <canvas id="greenPlayer" class="fixed"></canvas>
+        <canvas id="redPlayer" class="fixed"></canvas>
+        <canvas id="whitePlayer" class="fixed"></canvas>
+        <canvas id="yellowPlayer" class="fixed"></canvas>
       </div>
     </div>
   </body>

@@ -25,7 +25,7 @@ var SetUpView = function (viewId, joinFormId, spectateFormId, matchmakerFormId, 
   var self = this;
 
   var setCheckboxValue = function (name, value) {
-    self.joinForm.elements[name + "_Checkbox"].checked = value;
+    self.aiForm.elements[name + "_Checkbox"].checked = value;
   };
   for (var i = 0; i < AIPlayers.length; i++) {
     setCheckboxValue(AIPlayers[i], true);
@@ -48,13 +48,19 @@ var SetUpView = function (viewId, joinFormId, spectateFormId, matchmakerFormId, 
   };
   var sendJoin = function (event) {
     event.preventDefault();
+    self.setAIPlayers();
 
-    var value = getValue(event);
-    self.teamId = value;
-    if (value.length && gameMessenger.isConnected() && ((aiMessenger && aiMessenger.isConnected()) || AIPlayers.length == 0)) {
-      self.showPane(self.waitingPane);
-      self.sendRegisterMessage(value);
-    }
+    var join = function () {
+      var value = getValue(event);
+      self.teamId = value;
+      if (value.length && gameMessenger.isConnected()) {
+        self.showPane(self.waitingPane);
+        self.sendRegisterMessage(value);
+      }
+    };
+
+    if (AIPlayers.length > 0) self.tryAIConnection(join);
+    else join();
   };
   var sendSpectate = function (event) {
     event.preventDefault();
@@ -72,10 +78,6 @@ var SetUpView = function (viewId, joinFormId, spectateFormId, matchmakerFormId, 
     event.preventDefault();
     self.disconnectMatchmaker();
   };
-  var tryAI = function (event) {
-    event.preventDefault();
-    self.tryAIConnection();
-  };
   var beginGame = function (event) {
     event.preventDefault();
     self.showWaitingString("Waiting for other player(s) to begin game.");
@@ -90,13 +92,15 @@ var SetUpView = function (viewId, joinFormId, spectateFormId, matchmakerFormId, 
   else if (this.matchmakerForm.attachEvent) this.matchmakerForm.attachEvent('onsubmit', function (event) {tryMatchmaker(event, sendEnquire);});
   if (this.matchmakerForm.addEventListener) this.mmPort.addEventListener("change", disMatchmaker, false);
   else if (this.matchmakerForm.attachEvent) this.mmPort.attachEvent('onchange', disMatchmaker);
-  if (this.aiForm.addEventListener) this.aiForm.addEventListener("submit", tryAI, false);
-  else if (this.aiForm.attachEvent) this.aiForm.attachEvent('onsubmit', tryAI);
   if (this.aiForm.addEventListener) this.aiPort.addEventListener("change", disAI, false);
   else if (this.aiForm.attachEvent) this.aiPort.attachEvent('onchange', disAI);
   if (this.idForm.addEventListener) this.idForm.addEventListener("submit", beginGame, false);
   else if (this.idForm.attachEvent) this.idForm.attachEvent('onsubmit', beginGame);
-  this.joinForm.addEventListener('change', self.checkboxChanged);
+
+  document.getElementById("joinButton").disabled = true;
+  document.getElementById("joinButton").style.background = "#777777";
+  document.getElementById("spectateButton").disabled = true;
+  document.getElementById("spectateButton").style.background = "#777777";
 };
 
 /**
@@ -141,7 +145,12 @@ SetUpView.prototype.show = function () {
   this.view.style.display = "block";
   this.showPane(self.mainPane);
   this.joinForm.elements["teamField"].value = this.teamId;
-  this.tryMatchmakerConnection();
+  this.disconnectAI();
+  this.disconnectMatchmaker();
+  document.getElementById("joinButton").disabled = true;
+  document.getElementById("joinButton").style.background = "#777777";
+  document.getElementById("spectateButton").disabled = true;
+  document.getElementById("spectateButton").style.background = "#777777";
 };
 
 /**
@@ -195,17 +204,11 @@ SetUpView.prototype.showGameIdPane = function(gameId) {
  *
  * @param event the event created when a checkbox state is changed
  */
-SetUpView.prototype.checkboxChanged = function (event) {
-  var target = event.target;
-  if (target.type == "checkbox") {
-    var color = target.name.slice(0, -9);
-    var index = AIPlayers.indexOf(color);
-    if (index > -1) {
-      AIPlayers.splice(index, 1);
-    }
-    if (target.checked) {
-      AIPlayers.push(color);
-    }
+SetUpView.prototype.setAIPlayers = function () {
+  var checkboxes = document.querySelectorAll("input[type=checkbox]");
+  AIPlayers = [];
+  for (var i = 0; i < checkboxes.length; i++) {
+    if (checkboxes[i].checked) AIPlayers.push(checkboxes[i].value);
   }
 };
 
@@ -215,10 +218,18 @@ SetUpView.prototype.checkboxChanged = function (event) {
 SetUpView.prototype.tryMatchmakerConnection = function (passedCallback) {
   var callback = function () {
     document.getElementById("matchmakerButton").style.background = "#63AA7F";
+    document.getElementById("joinButton").disabled = false;
+    document.getElementById("joinButton").style.background = "#333333";
+    document.getElementById("spectateButton").disabled = false;
+    document.getElementById("spectateButton").style.background = "#333333";
     if (passedCallback) passedCallback();
   };
   var errorCallback = function (event) {
-    document.getElementById("matchmakerButton").style.background = "#B83E47";
+    document.getElementById("matchmakerButton").style.background = "#333333";
+    document.getElementById("joinButton").disabled = true;
+    document.getElementById("joinButton").style.background = "#777777";
+    document.getElementById("spectateButton").disabled = true;
+    document.getElementById("spectateButton").style.background = "#777777";
   };
   var connection = this.getMatchmakerConnection();
   gameMessenger.changeConnection("ws://" + connection.host + ":" + connection.port, callback, errorCallback);
@@ -228,29 +239,19 @@ SetUpView.prototype.tryMatchmakerConnection = function (passedCallback) {
  * Trys a connection to the ai with the data entered into the appropriate fields
  */
 SetUpView.prototype.tryAIConnection = function (passedCallback) {
-  var callback = function () {
-    document.getElementById("aiButton").style.background = "#63AA7F";
-    if (passedCallback) passedCallback();
-  };
-  var errorCallback = function (event) {
-    document.getElementById("aiButton").style.background = "#B83E47";
-  };
   var connection = this.getAiConnection();
-  aiMessenger.changeConnection("ws://" + connection.host + ":" + connection.port, callback, errorCallback);
+  aiMessenger.changeConnection("ws://" + connection.host + ":" + connection.port, passedCallback);
 };
 
 SetUpView.prototype.disconnectMatchmaker = function() {
   var callback = function (event) {
-    document.getElementById("matchmakerButton").style.background = "#B83E47";
+    document.getElementById("matchmakerButton").style.background = "#333333";
   };
   gameMessenger.close(callback);
 }
 
 SetUpView.prototype.disconnectAI = function() {
-  var callback = function (event) {
-    document.getElementById("aiButton").style.background = "#B83E47";
-  };
-  aiMessenger.close(callback);
+  aiMessenger.close();
 }
 
 /**

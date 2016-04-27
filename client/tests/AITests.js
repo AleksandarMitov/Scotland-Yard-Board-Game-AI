@@ -98,7 +98,9 @@ QUnit.test("AI: Notify turn message is recieved correctly.", function (assert) {
   gameMessenger.handleMessage(JSON.stringify(notifyTurnMessage));
   messages = aiMessenger.testContainer.sentMessages;
   assert.ok(guiConnector.testContainer.startTurn.length > 1,
-            "The startTurn method in GUIConnector should have been called with a second argument.");
+    "The startTurn method in GUIConnector should have been called with a second argument.");
+  assert.ok(guiConnector.testContainer.startTurn[1],
+    "The startTurn method in GUIConnector should be passed true as its second argument when an AI is playing.");
   assert.deepEqual(messages[0],
                     notifyTurnMessage,
                     "The AIMessenger should forward the notify turn message to the ai as the Blue player is an ai player.");
@@ -107,6 +109,8 @@ QUnit.test("AI: Notify turn message is recieved correctly.", function (assert) {
   AIPlayers = ["Black", "Green"];
   gameMessenger.handleMessage(JSON.stringify(notifyTurnMessage));
   messages = aiMessenger.testContainer.sentMessages;
+  assert.notOk(guiConnector.testContainer.startTurn[1],
+    "The startTurn method in GUIConnector should be passed false as its second argument when an AI is not playing.");
   assert.deepEqual(messages.length,
                     0,
                     "The AIMessenger should not send the notify turn message to the ai as the Blue player is not an ai player.");

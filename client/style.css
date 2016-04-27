@@ -56,7 +56,7 @@ html, body {
 }
 
 #setUpView form input.teamField {
-  width: 100%;
+  width: 72%;
 }
 
 #setUpView form input.connectionField {

@@ -28,7 +28,6 @@ function load () {
   setUpView = new SetUpView("setUpView", "joinForm", "spectateForm", "matchmakerForm", "aiForm", "idForm", "setUpMain", "setUpWaiting", "setUpId", "list");
   guiConnector = new GUIConnector();
   gameMessenger = new GameMessenger();
-  setUpView.tryMatchmakerConnection(sendEnquire);
   aiMessenger = new AIMessenger();
   var imageLoader = new ImageLoader(initialise);
   imageLoader.load("Taxi", "resources/ticket_taxi.png");
@@ -107,7 +106,8 @@ function sendEnquire () {
  * Requests the judge host and port needed to spectate a game.
  */
 function requestConnection () {
-  var gameId = + setUpView.list.getGameId();
+  console.log("Here");
+  var gameId = setUpView.list.getGameId();
   var requestMessage = {};
   requestMessage['type'] = 'REQUEST_CONNECTION';
   requestMessage['game_id'] = gameId;

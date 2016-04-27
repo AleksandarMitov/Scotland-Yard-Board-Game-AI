@@ -53,6 +53,8 @@ GUIConnector.prototype.setPlayerTickets = function (tickets) {
 
 GUIConnector.prototype.animatePlayer = function (player, location) {
   board.animateToPosition(player, location);
+  board.cancelPing();
+  notify.clear();
 };
 
 GUIConnector.prototype.removeTicket = function (player, ticket) {
@@ -77,39 +79,37 @@ GUIConnector.prototype.updateTicketView = function (ticket, target) {
 };
 
 GUIConnector.prototype.startTurn = function (notifyTurnMessage, aiMove) {
+  board.aiPlaying = aiMove;
+
   var addTokenToMoves = function (validMoves, token) {
     for (var i = 0; i < validMoves.length; i++) {
       validMoves[i]['token'] = token;
     }
   };
-  if (aiMove) {
-    //Show visor
-  } else {
+  if (!board.aiPlaying) {
     var validMoves = notifyTurnMessage['valid_moves'];
     var token = notifyTurnMessage['token'];
     addTokenToMoves(validMoves, token);
-    if (validMoves.length == 1 && validMoves[0]['move_type'] == "MovePass") return sendMove(notifyTurnMessage['game_id'], validMoves[0], notifyTurnMessage.token);
+    if (validMoves.length == 1 && validMoves[0]['move_type'] == "MovePass")
+      return this.endTurn(validMoves[0]);
     board.setValidMoves(notifyTurnMessage['valid_moves']);
   }
   board.currentPlayer = notifyTurnMessage['valid_moves'][0].move.colour;
   notify.clear();
   if (board.currentPlayer == "Black") notify.setText("It's Mr X's turn.");
   else notify.setText("It's the " + board.currentPlayer + " detective's turn.");
+  board.cancelAnimation(board.currentPlayer);
   board.setPosition(board.currentPlayer, notifyTurnMessage['location']);
   board.startPing();
   timer.start();
 };
 
 GUIConnector.prototype.endTurn = function (move) {
-  var sendMove = function (move) {
-    move['type'] = "MOVE";
-    move['game_id'] = gameId;
-    gameMessenger.sendMessage(move);
-  };
-  sendMove(move);
+  move['type'] = "MOVE";
+  move['game_id'] = gameId;
+  gameMessenger.sendMessage(move);
   board.setValidMoves(null);
   board.currentPlayer = null;
-  board.cancelPing();
   timer.reset();
 };
 

@@ -12,6 +12,15 @@
  * @param playerColours the colours of the players in the game.
  */
 var BoardView = function (canvas, boardCanvas, dropDown, colour, boardImage, locations, playerColours) {
+  this.aiPlaying = false;
+  this.cAnim = {
+    "Blue": null,
+    "Green": null,
+    "Red": null,
+    "Yellow": null,
+    "White": null,
+    "Black": null
+  };
   this.canvas = canvas;
   this.boardCanvas = boardCanvas;
   this.dropDown = dropDown;
@@ -92,9 +101,13 @@ BoardView.prototype.animateCounter = function (colour) {
     playerObj.x = playerObj.xAnimator.getValue();
     playerObj.y = playerObj.yAnimator.getValue();
     self.revalidate();
-    if (percentCompleted < 1) window.requestAnimationFrame(step);
+    if (percentCompleted < 1) self.cAnim[colour] = window.requestAnimationFrame(step);
   };
-  window.requestAnimationFrame(step);
+  this.cAnim[colour] = window.requestAnimationFrame(step);
+};
+
+BoardView.prototype.cancelAnimation = function (colour) {
+  window.cancelAnimationFrame(this.cAnim[colour]);
 };
 
 /**
@@ -176,6 +189,7 @@ BoardView.prototype.revalidate = function () {
  */
 BoardView.prototype.mouseDown = function (event, canvas) {
   this.dropDown.setVisible(false);
+  if (this.aiPlaying) return;
   if (!this.validMoves) return;
   var mouseLoc = this.positionRelativeTo({x: event.clientX, y: event.clientY}, canvas);
   var trueLoc = this.board.unscaledPosition(mouseLoc);
@@ -200,9 +214,14 @@ BoardView.prototype.mouseDown = function (event, canvas) {
  * @param canvas the canvas for this view.
  */
 BoardView.prototype.mouseMoved = function (event, canvas) {
-  var mouseLoc = this.positionRelativeTo({x: event.clientX, y: event.clientY}, canvas);
-  var trueLoc = this.board.unscaledPosition(mouseLoc);
-  this.selectedNode = this.findPosition(trueLoc);
+  if (!this.aiPlaying) {
+    var mouseLoc = this.positionRelativeTo({x: event.clientX, y: event.clientY}, canvas);
+    var trueLoc = this.board.unscaledPosition(mouseLoc);
+    this.selectedNode = this.findPosition(trueLoc);
+  }
+  else {
+    this.selectedNode = null;
+  }
   this.repaint();
 }
 
