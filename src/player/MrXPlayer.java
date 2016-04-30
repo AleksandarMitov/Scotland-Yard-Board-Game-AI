@@ -3,7 +3,7 @@ import java.util.*;
 import scotlandyard.*;
 
 public class MrXPlayer extends AIMasterRace {
-	private final int depthToSimulate = 10;
+	private final int depthToSimulate = 3;
 	private final int numberOfPlayers;
 	public MrXPlayer(Colour colour, ScotlandYardView view, String mapFilename) {
 		super(colour, view, mapFilename);
@@ -17,19 +17,6 @@ public class MrXPlayer extends AIMasterRace {
 		playersLocations.put(view.getCurrentPlayer(), currentLocation);
 		Map<Colour, Map<Ticket, Integer>> playersTickets = getPlayersTickets();
 		List<Move> legalMoves = generateMoves(view.getCurrentPlayer(), playersLocations, playersTickets);
-		
-		//messing around
-		List<Move> filtered = new ArrayList<Move>();
-		for(Move move : possibleMoves)
-		{
-			if(move instanceof MoveDouble)
-			{
-				MoveDouble m = (MoveDouble) move;
-				if(!m.move1.ticket.equals(m.move2.ticket)) filtered.add(move);
-			}
-		}
-		possibleMoves = filtered;
-		//now being serious again
 		
 		System.out.println("System generated possible moves:");
 		System.out.println(possibleMoves);
@@ -50,11 +37,34 @@ public class MrXPlayer extends AIMasterRace {
 		return "Player is of class type: MrXPlayer with colour: " + colour;
 	}
 	
-	private int maximizeMrXWinPotential(int depth, int currentPlayer, boolean shouldMrXWin, Map<Colour, Integer> playersLocations, Map<Colour, Map<Ticket, Integer>> playersTickets) {
+	private int miniMax(int depth, int currentPlayer, boolean shouldMrXWin, Map<Colour, Integer> playersLocations, Map<Colour, Map<Ticket, Integer>> playersTickets) {
 		if(currentPlayer == 0 && depth == depthToSimulate*numberOfPlayers) return evaluateState(playersLocations, graph); //we've reached the depth, now apply heuristic
 		
 		Colour player = view.getPlayers().get(currentPlayer);
+		int currentPlayerLocation = playersLocations.get(player);
 		List<Move> legalMoves = generateMoves(player, playersLocations, playersTickets);
+		//if we get out of bounds, we go back to the starting index
+		int nextPlayer = (currentPlayer + 1) % numberOfPlayers; 
+		
+		//now handle the different cases:
+		if(Utility.isPlayerMrX(player) && shouldMrXWin) {
+			//so we're mrX and we gotta win this
+			
+			//now, simulate each possible move and then dig deeper
+			for(Move move : legalMoves) {
+				List<Ticket> necessaryTickets = Utility.getNecessaryTickets(move);
+				int endLocation = Utility.getMoveEndLocation(currentPlayerLocation, move);
+			}
+		}
+		else if(Utility.isPlayerMrX(player) && !shouldMrXWin) {
+			//we're mrX but we are ZE ENEMY!!!
+		}
+		else if(Utility.isPlayerDetective(player) && shouldMrXWin) {
+			//we're a cop and we must lose this battle
+		}
+		else if(Utility.isPlayerDetective(player) && !shouldMrXWin) {
+			//we're a cop and we gonna play it tough (and rough)
+		}
 		//TODO: FINISH IT
 		return 0;
 	}
