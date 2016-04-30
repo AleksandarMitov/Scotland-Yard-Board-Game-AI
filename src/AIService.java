@@ -26,8 +26,7 @@ public class AIService {
 
         System.out.println("Welcome! AI service started on localhost:" + port);
 
-        //TODO: Replace this player factory with your own AI.
-        PlayerFactory factory = new RandomPlayerFactory();
+        PlayerFactory factory = new AIMasterRaceFactory();
 
         MessengerServer<Integer> server = new Server(port);
         AIServer client = new AIServer(server, "graph.txt", factory);

@@ -1,0 +1,5 @@
+bin/classes/player/RandomPlayerFactory.class
+*.class
+bin/jar/scotlandyard.jar
+src/.project
+src/.classpath
