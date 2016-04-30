@@ -173,7 +173,7 @@ GameMessenger.prototype.interpretConnection = function (messageConnection) {
  * @param messageNotifyTurn the NOTIFY_TURN message.
  */
 GameMessenger.prototype.interpretNotifyTurn = function (messageNotifyTurn) {
-    var whichPlayer = messageNotifyTurn['valid_moves'][0]['move']['colour'];
+    var whichPlayer = messageNotifyTurn['valid_moves'][0].move.colour;
     if(aiMessenger.isConnected() && AIPlayers.indexOf(whichPlayer) != -1) {
         aiMessenger.sendMessage(messageNotifyTurn);
 		guiConnector.startTurn(messageNotifyTurn, true);
