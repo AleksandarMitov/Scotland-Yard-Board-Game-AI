@@ -105,8 +105,7 @@ GameMessenger.prototype.interpretNotify = function (messageNotify) {
         case "MoveDouble":
             var ticketType = "Double";
             if(whichPlayer == "Black") {
-                guiConnector.updateTicketView(messageNotify.move.move1.ticket, messageNotify.move.move1.target);
-                guiConnector.updateTicketView(messageNotify.move.move2.ticket, messageNotify.move.move2.target);
+                guiConnector.updateTicketView("Double", messageNotify.move.move2.target);
             }
             guiConnector.removeTicket(whichPlayer, ticketType);
             break;

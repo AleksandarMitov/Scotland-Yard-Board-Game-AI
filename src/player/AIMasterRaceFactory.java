@@ -22,7 +22,7 @@ public class AIMasterRaceFactory implements PlayerFactory {
     	AIMasterRace newPlayer;
     	if(isMrX(colour)) newPlayer = new MrXPlayer(colour, view, mapFilename);
     	else newPlayer = new DetectivePlayer(colour, view, mapFilename);
-    	aiPlayers.add(newPlayer);
+    	//aiPlayers.add(newPlayer);
         return newPlayer;
     }
 
