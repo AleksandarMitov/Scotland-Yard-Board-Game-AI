@@ -33,9 +33,9 @@ public class MrXPlayer extends AIMasterRace {
 				
 		Map<Colour, Integer> playersLocations = getPlayersLocations();
 		//we're mrX so we should update with our true location that only we know every round
-		playersLocations.put(view.getCurrentPlayer(), currentLocation);
+		playersLocations.put(colour, currentLocation);
 		Map<Colour, Map<Ticket, Integer>> playersTickets = getPlayersTickets();
-		List<Move> legalMoves = generateMoves(view.getCurrentPlayer(), playersLocations, playersTickets);
+		List<Move> legalMoves = generateMoves(colour, playersLocations, playersTickets);
 		
 		//running AI
 		miniMaxWithAlphaBetaPruning(0, 0, Long.MIN_VALUE, Long.MAX_VALUE, playersLocations, playersTickets);
@@ -55,8 +55,8 @@ public class MrXPlayer extends AIMasterRace {
 	 * @param playersTickets a map holding the tickets for each player
 	 * @return
 	 */
-	private int miniMaxWithAlphaBetaPruning(int depth, int currentPlayer, long alpha, long beta, Map<Colour, Integer> playersLocations, Map<Colour, Map<Ticket, Integer>> playersTickets) {
-		if(depth == depthToSimulate) return evaluateState(playersLocations, graph); //we've reached the depth, now apply heuristic
+	private long miniMaxWithAlphaBetaPruning(int depth, int currentPlayer, long alpha, long beta, Map<Colour, Integer> playersLocations, Map<Colour, Map<Ticket, Integer>> playersTickets) {
+		if(depth == depthToSimulate) return evaluateState(playersLocations, graph, playersTickets); //we've reached the depth, now apply heuristic
 		Move currentDepthOtimalMove = null;
 		
 		Colour player = playerOrder.get(currentPlayer);
@@ -64,12 +64,12 @@ public class MrXPlayer extends AIMasterRace {
 		List<Move> legalMoves = generateMoves(player, playersLocations, playersTickets);
 		//if we get out of bounds, we go back to the starting index
 		int nextPlayer = (currentPlayer + 1) % numberOfPlayers;
-		int finalScore = 0;
+		long finalScore = 0;
 		
 		//now handle the different cases by backtracking the different possibilities for making a move:
 		if(Utility.isPlayerMrX(player)) {
 			//so we're mrX and we gotta win this
-			int maximizedScore = Integer.MIN_VALUE;
+			long maximizedScore = Integer.MIN_VALUE;
 			Move maximizedMove = MovePass.instance(player);
 			//now, simulate each possible move and then dig deeper
 			for(Move move : legalMoves) {
@@ -84,7 +84,7 @@ public class MrXPlayer extends AIMasterRace {
 				//simulate going to end location
 				playersLocations.put(player, endLocation);
 				//we're ready to dive in!
-				int heuristicScore = miniMaxWithAlphaBetaPruning(depth + 1, nextPlayer, alpha, beta, playersLocations, playersTickets);
+				long heuristicScore = miniMaxWithAlphaBetaPruning(depth + 1, nextPlayer, alpha, beta, playersLocations, playersTickets);
 				if(heuristicScore > maximizedScore) {
 					//we've found a better move :)
 					maximizedScore = heuristicScore;
@@ -107,7 +107,7 @@ public class MrXPlayer extends AIMasterRace {
 		}
 		else {
 			//we're a cop and therefore ZE ENEMY!!!
-			int minimizedScore = Integer.MAX_VALUE;
+			long minimizedScore = Integer.MAX_VALUE;
 			Move minimizedMove = MovePass.instance(player);
 			//now, simulate each possible move and then dig deeper
 			for(Move move : legalMoves) {
@@ -122,7 +122,7 @@ public class MrXPlayer extends AIMasterRace {
 				//simulate going to end location
 				playersLocations.put(player, endLocation);
 				//we're ready to dive in!
-				int heuristicScore = miniMaxWithAlphaBetaPruning(depth + 1, nextPlayer, alpha, beta, playersLocations, playersTickets);
+				long heuristicScore = miniMaxWithAlphaBetaPruning(depth + 1, nextPlayer, alpha, beta, playersLocations, playersTickets);
 				if(heuristicScore < minimizedScore) {
 					//we've found a better move :)
 					minimizedScore = heuristicScore;
@@ -155,7 +155,7 @@ public class MrXPlayer extends AIMasterRace {
 	 * @param graph
 	 * @return
 	 */
-	private int evaluateState(Map<Colour, Integer> playersLocations, ScotlandYardGraph graph) {
+	private long evaluateState(Map<Colour, Integer> playersLocations, ScotlandYardGraph graph, Map<Colour, Map<Ticket, Integer>> playersTickets) {
 		//Currently picks random shit
 		//TODO: Make some decent implementation
 		Integer[] arr = {0, 1, -1};

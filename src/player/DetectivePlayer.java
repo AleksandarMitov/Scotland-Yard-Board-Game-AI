@@ -8,10 +8,6 @@ public class DetectivePlayer extends AIMasterRace {
 	 */
 	private final int depthToSimulate = 10;
 	/**
-	 * for convenience and used later, holds number of players
-	 */
-	private int numberOfPlayers;
-	/**
 	 * place to hold our computed move from the AI
 	 */
 	private Move optimalMove = null;
@@ -27,18 +23,15 @@ public class DetectivePlayer extends AIMasterRace {
 	
 	@Override
 	protected Move chooseMove(int currentLocation, List<Move> possibleMoves) {
-		numberOfPlayers = view.getPlayers().size();
 		//now working around a bug with the ScotlandYardView.getPlayers() implementation!? Black player isn't always first
 		playerOrder = getPlayersInOrder(view);
 				
 		Map<Colour, Integer> playersLocations = getPlayersLocations();
-		//we're mrX so we should update with our true location that only we know every round
-		playersLocations.put(view.getCurrentPlayer(), currentLocation);
 		Map<Colour, Map<Ticket, Integer>> playersTickets = getPlayersTickets();
-		List<Move> legalMoves = generateMoves(view.getCurrentPlayer(), playersLocations, playersTickets);
+		List<Move> legalMoves = generateMoves(colour, playersLocations, playersTickets);
 		
 		//running AI
-		miniMaxWithAlphaBetaPruning(0, 0, Long.MIN_VALUE, Long.MAX_VALUE, playersLocations, playersTickets);
+		miniMaxWithAlphaBetaPruning(0, colour, true, Long.MIN_VALUE, Long.MAX_VALUE, playersLocations, playersTickets);
 		//donezo
 		return optimalMove; //result from running the Mini-Max, Alpha-Beta pruning, award winning algorithm
 	}
@@ -55,21 +48,19 @@ public class DetectivePlayer extends AIMasterRace {
 	 * @param playersTickets a map holding the tickets for each player
 	 * @return
 	 */
-	private int miniMaxWithAlphaBetaPruning(int depth, int currentPlayer, long alpha, long beta, Map<Colour, Integer> playersLocations, Map<Colour, Map<Ticket, Integer>> playersTickets) {
-		if(depth == depthToSimulate) return evaluateState(playersLocations, graph); //we've reached the depth, now apply heuristic
+	private long miniMaxWithAlphaBetaPruning(int depth, Colour whichDetective, boolean isDetectiveTurn, long alpha, long beta, Map<Colour, Integer> playersLocations, Map<Colour, Map<Ticket, Integer>> playersTickets) {
+		if(depth == depthToSimulate) return evaluateState(playersLocations, graph, playersTickets); //we've reached the depth, now apply heuristic
 		Move currentDepthOtimalMove = null;
 		
-		Colour player = playerOrder.get(currentPlayer);
+		Colour player = isDetectiveTurn ? whichDetective : Utility.getMrXColour();
 		int currentPlayerLocation = playersLocations.get(player);
 		List<Move> legalMoves = generateMoves(player, playersLocations, playersTickets);
-		//if we get out of bounds, we go back to the starting index
-		int nextPlayer = (currentPlayer + 1) % numberOfPlayers;
-		int finalScore = 0;
+		long finalScore = 0;
 		
 		//now handle the different cases by backtracking the different possibilities for making a move:
-		if(Utility.isPlayerMrX(player)) {
-			//so we're mrX and we gotta win this
-			int maximizedScore = Integer.MIN_VALUE;
+		if(isDetectiveTurn) {
+			//so we're a detective and we gotta win this
+			long maximizedScore = Integer.MIN_VALUE;
 			Move maximizedMove = MovePass.instance(player);
 			//now, simulate each possible move and then dig deeper
 			for(Move move : legalMoves) {
@@ -84,7 +75,7 @@ public class DetectivePlayer extends AIMasterRace {
 				//simulate going to end location
 				playersLocations.put(player, endLocation);
 				//we're ready to dive in!
-				int heuristicScore = miniMaxWithAlphaBetaPruning(depth + 1, nextPlayer, alpha, beta, playersLocations, playersTickets);
+				long heuristicScore = miniMaxWithAlphaBetaPruning(depth + 1, whichDetective, !isDetectiveTurn, alpha, beta, playersLocations, playersTickets);
 				if(heuristicScore > maximizedScore) {
 					//we've found a better move :)
 					maximizedScore = heuristicScore;
@@ -106,8 +97,8 @@ public class DetectivePlayer extends AIMasterRace {
 			finalScore = maximizedScore;
 		}
 		else {
-			//we're a cop and therefore ZE ENEMY!!!
-			int minimizedScore = Integer.MAX_VALUE;
+			//we're mrX and therefore ZE ENEMY!!!
+			long minimizedScore = Integer.MAX_VALUE;
 			Move minimizedMove = MovePass.instance(player);
 			//now, simulate each possible move and then dig deeper
 			for(Move move : legalMoves) {
@@ -122,7 +113,7 @@ public class DetectivePlayer extends AIMasterRace {
 				//simulate going to end location
 				playersLocations.put(player, endLocation);
 				//we're ready to dive in!
-				int heuristicScore = miniMaxWithAlphaBetaPruning(depth + 1, nextPlayer, alpha, beta, playersLocations, playersTickets);
+				long heuristicScore = miniMaxWithAlphaBetaPruning(depth + 1, whichDetective, !isDetectiveTurn, alpha, beta, playersLocations, playersTickets);
 				if(heuristicScore < minimizedScore) {
 					//we've found a better move :)
 					minimizedScore = heuristicScore;
@@ -150,12 +141,12 @@ public class DetectivePlayer extends AIMasterRace {
 	
 	/**
 	 * Heuristically evaluate the game state
-	 * Higher score indicates better chances for the detectives to win
+	 * Higher score indicates better chances for the detective to win
 	 * @param playersLocations
 	 * @param graph
 	 * @return
 	 */
-	private int evaluateState(Map<Colour, Integer> playersLocations, ScotlandYardGraph graph) {
+	private long evaluateState(Map<Colour, Integer> playersLocations, ScotlandYardGraph graph, Map<Colour, Map<Ticket, Integer>> playersTickets) {
 		//Currently picks random shit
 		//TODO: Make some decent implementation
 		Integer[] arr = {0, 1, -1};
