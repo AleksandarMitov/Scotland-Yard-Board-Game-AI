@@ -37,19 +37,17 @@ public class DetectivePlayer extends AIMasterRace {
 		return "Player is of class type: DetectivePlayer with colour: " + colour;
 	}
 	
-	private int miniMax(int depth, int currentPlayer, Map<Colour, Integer> playersLocations, Map<Colour, Map<Ticket, Integer>> playersTickets) {
-		if(currentPlayer == 0 && depth == depthToSimulate*numberOfPlayers) return evaluateState(playersLocations, graph); //we've reached the depth, now apply heuristic
+	private int miniMax(int depth, Colour whichDetective, boolean mrXTurn, Map<Colour, Integer> playersLocations, Map<Colour, Map<Ticket, Integer>> playersTickets) {
+		if(depth == depthToSimulate*2) return evaluateState(playersLocations, graph); //we've reached the depth, now apply heuristic
 		Move currentDepthOtimalMove = null;
 		
-		Colour player = view.getPlayers().get(currentPlayer);
+		Colour player = whichDetective;
 		int currentPlayerLocation = playersLocations.get(player);
 		List<Move> legalMoves = generateMoves(player, playersLocations, playersTickets);
-		//if we get out of bounds, we go back to the starting index
-		int nextPlayer = (currentPlayer + 1) % numberOfPlayers; 
 		
 		//now handle the different cases by backtracking the different possibilities for making a move:
-		if(Utility.isPlayerMrX(player)) {
-			//so we're mrX and we gotta win this
+		if(!mrXTurn) {
+			//so we're the detective and we gotta win this
 			int maximizedScore = Integer.MIN_VALUE;
 			Move maximizedMove = MovePass.instance(player);
 			//now, simulate each possible move and then dig deeper
@@ -65,7 +63,7 @@ public class DetectivePlayer extends AIMasterRace {
 				//simulate going to end location
 				playersLocations.put(player, endLocation);
 				//we're ready to dive in!
-				int heuristicScore = miniMax(depth + 1, nextPlayer, playersLocations, playersTickets);
+				int heuristicScore = miniMax(depth + 1, whichDetective, !mrXTurn, playersLocations, playersTickets);
 				if(heuristicScore > maximizedScore) {
 					//we've found a better move :)
 					maximizedScore = heuristicScore;
@@ -83,7 +81,7 @@ public class DetectivePlayer extends AIMasterRace {
 			}
 		}
 		else {
-			//we're a cop and therefore ZE ENEMY!!!
+			//we're mrX and need to have our ass put in jail
 			int minimizedScore = Integer.MAX_VALUE;
 			Move minimizedMove = MovePass.instance(player);
 			//now, simulate each possible move and then dig deeper
@@ -99,7 +97,7 @@ public class DetectivePlayer extends AIMasterRace {
 				//simulate going to end location
 				playersLocations.put(player, endLocation);
 				//we're ready to dive in!
-				int heuristicScore = miniMax(depth + 1, nextPlayer, playersLocations, playersTickets);
+				int heuristicScore = miniMax(depth + 1, whichDetective, !mrXTurn, playersLocations, playersTickets);
 				if(heuristicScore < minimizedScore) {
 					//we've found a better move :)
 					minimizedScore = heuristicScore;
@@ -122,7 +120,7 @@ public class DetectivePlayer extends AIMasterRace {
 	
 	/**
 	 * Heuristically evaluate the game state
-	 * Higher score indicates better chances for MrX to win
+	 * Higher score indicates better chances for the detectives to win
 	 * @param playersLocations
 	 * @param graph
 	 * @return
