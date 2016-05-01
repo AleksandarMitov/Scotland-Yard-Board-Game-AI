@@ -16,15 +16,16 @@ import java.io.*;
  * which must be one from the list.
  */
 public abstract class AIMasterRace implements Player, Spectator {
-
 	protected ScotlandYardView view;
 	protected ScotlandYardGraph graph; //holds game graph
 	protected Colour colour;
+	protected final int numberOfPlayers;
 	
     public AIMasterRace(Colour playerColour, ScotlandYardView view, String graphFilename){
     	this.view = view;
     	this.graph = generateGameGraph(graphFilename);
     	this.colour = playerColour;
+    	numberOfPlayers = view.getPlayers().size();
     	System.out.println("Creating player: " + colour);
     }
 

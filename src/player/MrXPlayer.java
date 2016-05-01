@@ -4,10 +4,10 @@ import scotlandyard.*;
 
 public class MrXPlayer extends AIMasterRace {
 	private final int depthToSimulate = 3;
-	private final int numberOfPlayers;
+	private Move optimalMove = null;
+	
 	public MrXPlayer(Colour colour, ScotlandYardView view, String mapFilename) {
 		super(colour, view, mapFilename);
-		numberOfPlayers = view.getPlayers().size();
 	}
 	
 	@Override
@@ -37,8 +37,9 @@ public class MrXPlayer extends AIMasterRace {
 		return "Player is of class type: MrXPlayer with colour: " + colour;
 	}
 	
-	private int miniMax(int depth, int currentPlayer, boolean shouldMrXWin, Map<Colour, Integer> playersLocations, Map<Colour, Map<Ticket, Integer>> playersTickets) {
+	private int miniMax(int depth, int currentPlayer, Map<Colour, Integer> playersLocations, Map<Colour, Map<Ticket, Integer>> playersTickets) {
 		if(currentPlayer == 0 && depth == depthToSimulate*numberOfPlayers) return evaluateState(playersLocations, graph); //we've reached the depth, now apply heuristic
+		Move currentDepthOtimalMove = null;
 		
 		Colour player = view.getPlayers().get(currentPlayer);
 		int currentPlayerLocation = playersLocations.get(player);
@@ -46,31 +47,82 @@ public class MrXPlayer extends AIMasterRace {
 		//if we get out of bounds, we go back to the starting index
 		int nextPlayer = (currentPlayer + 1) % numberOfPlayers; 
 		
-		//now handle the different cases:
-		if(Utility.isPlayerMrX(player) && shouldMrXWin) {
+		//now handle the different cases by backtracking the different possibilities for making a move:
+		if(Utility.isPlayerMrX(player)) {
 			//so we're mrX and we gotta win this
-			
+			int maximizedScore = Integer.MIN_VALUE;
+			Move maximizedMove = MovePass.instance(player);
 			//now, simulate each possible move and then dig deeper
 			for(Move move : legalMoves) {
 				List<Ticket> necessaryTickets = Utility.getNecessaryTickets(move);
 				int endLocation = Utility.getMoveEndLocation(currentPlayerLocation, move);
+				//now should recall that AIMasterRace#generateMoves already makes sure we have the tickets for the move
+				//simulate using the tickets
+				for(Ticket ticket : necessaryTickets) {
+					Map<Ticket, Integer> playerTicketPool = playersTickets.get(player);
+					playerTicketPool.put(ticket, playerTicketPool.get(ticket) - 1); //reduce number by 1
+				}
+				//simulate going to end location
+				playersLocations.put(player, endLocation);
+				//we're ready to dive in!
+				int heuristicScore = miniMax(depth + 1, nextPlayer, playersLocations, playersTickets);
+				if(heuristicScore > maximizedScore) {
+					//we've found a better move :)
+					maximizedScore = heuristicScore;
+					maximizedMove = move;
+				}
+				//we're done examining this scenario, now revert changes
+				//return tickets:
+				for(Ticket ticket : necessaryTickets) {
+					Map<Ticket, Integer> playerTicketPool = playersTickets.get(player);
+					playerTicketPool.put(ticket, playerTicketPool.get(ticket) + 1); //increase number by 1
+				}
+				//return to original location
+				playersLocations.put(player, currentPlayerLocation);
+				currentDepthOtimalMove = maximizedMove; //retain optimal move
 			}
 		}
-		else if(Utility.isPlayerMrX(player) && !shouldMrXWin) {
-			//we're mrX but we are ZE ENEMY!!!
+		else {
+			//we're a cop and therefore ZE ENEMY!!!
+			int minimizedScore = Integer.MAX_VALUE;
+			Move minimizedMove = MovePass.instance(player);
+			//now, simulate each possible move and then dig deeper
+			for(Move move : legalMoves) {
+				List<Ticket> necessaryTickets = Utility.getNecessaryTickets(move);
+				int endLocation = Utility.getMoveEndLocation(currentPlayerLocation, move);
+				//now should recall that AIMasterRace#generateMoves already makes sure we have the tickets for the move
+				//simulate using the tickets
+				for(Ticket ticket : necessaryTickets) {
+					Map<Ticket, Integer> playerTicketPool = playersTickets.get(player);
+					playerTicketPool.put(ticket, playerTicketPool.get(ticket) - 1); //reduce number by 1
+				}
+				//simulate going to end location
+				playersLocations.put(player, endLocation);
+				//we're ready to dive in!
+				int heuristicScore = miniMax(depth + 1, nextPlayer, playersLocations, playersTickets);
+				if(heuristicScore < minimizedScore) {
+					//we've found a better move :)
+					minimizedScore = heuristicScore;
+					minimizedMove = move;
+				}
+				//we're done examining this scenario, now revert changes
+				//return tickets:
+				for(Ticket ticket : necessaryTickets) {
+					Map<Ticket, Integer> playerTicketPool = playersTickets.get(player);
+					playerTicketPool.put(ticket, playerTicketPool.get(ticket) + 1); //increase number by 1
+				}
+				//return to original location
+				playersLocations.put(player, currentPlayerLocation);
+				currentDepthOtimalMove = minimizedMove; //retain optimal move
+			}
 		}
-		else if(Utility.isPlayerDetective(player) && shouldMrXWin) {
-			//we're a cop and we must lose this battle
-		}
-		else if(Utility.isPlayerDetective(player) && !shouldMrXWin) {
-			//we're a cop and we gonna play it tough (and rough)
-		}
-		//TODO: FINISH IT
+		if(depth == 0) optimalMove = currentDepthOtimalMove;
 		return 0;
 	}
 	
 	/**
 	 * Heuristically evaluate the game state
+	 * Higher score indicates better chances for MrX to win
 	 * @param playersLocations
 	 * @param graph
 	 * @return
