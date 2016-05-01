@@ -18,35 +18,21 @@ import java.io.*;
 public abstract class AIMasterRace implements Player, Spectator {
 	protected ScotlandYardView view;
 	protected ScotlandYardGraph graph; //holds game graph
-	protected Colour colour;
+	protected Colour colour; //holds the player's colour
 	
 	
     public AIMasterRace(Colour playerColour, ScotlandYardView view, String graphFilename){
     	this.view = view;
     	this.graph = generateGameGraph(graphFilename);
     	this.colour = playerColour;
-    	
-    	//System.out.println("Number of players: " + numberOfPlayers);
-    	System.out.println("Creating player: " + colour);
+    	System.out.println("Spawning AI player: " + colour);
     }
 
     @Override
     public void notify(int location, List<Move> moves, Integer token, Receiver receiver) {
-        System.out.println("Preparing to make a move");
-        
-        //Start messing around
-        List<Colour> players = view.getPlayers();
-        System.out.println(this.toString());
-        if(colour.equals(Colour.Blue)) {
-        	for(Colour player : players)
-            {
-            	System.out.println("Player " + player + "'s position is: " + view.getPlayerLocation(player));
-            }
-        }
-        //End messing around
-        
+        System.out.println("Flexing AI muscles to come up with a move...");
         Move moveToPlay = chooseMove(location, moves);
-        System.out.println("Playing move: " + moveToPlay);
+        System.out.println("Piece of cake! Playing move: " + moveToPlay);
         receiver.playMove(moveToPlay, token);
     }
     

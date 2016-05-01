@@ -3,24 +3,30 @@ import java.util.*;
 import scotlandyard.*;
 
 public class MrXPlayer extends AIMasterRace {
-	private final int depthToSimulate = 8;
-	private final int numberOfPlayers;
+	private final int depthToSimulate = 10;
+	private int numberOfPlayers;
 	private Move optimalMove = null;
 	private List<Colour> playerOrder = new ArrayList<Colour>();
 	
 	public MrXPlayer(Colour colour, ScotlandYardView view, String mapFilename) {
 		super(colour, view, mapFilename);
-		numberOfPlayers = view.getPlayers().size();
-		
-		//now working around a bug with the ScotlandYardView.getPlayers() implementation!? Black player isn't always first
-		playerOrder.add(Utility.getMrXColour());
-		for(Colour player : view.getPlayers()) {
-			if(Utility.isPlayerDetective(player)) playerOrder.add(player);
-		}
 	}
 	
 	@Override
 	protected Move chooseMove(int currentLocation, List<Move> possibleMoves) {
+		numberOfPlayers = view.getPlayers().size();
+		System.out.println("Starting number of players: " + numberOfPlayers);
+		//now working around a bug with the ScotlandYardView.getPlayers() implementation!? Black player isn't always first
+		playerOrder.clear();
+		playerOrder.add(Utility.getMrXColour());
+		for(Colour player : view.getPlayers()) {
+			if(Utility.isPlayerDetective(player)) playerOrder.add(player);
+		}
+		System.out.println("Starting number of players2: " + playerOrder.size());
+		System.out.println("Players playin: ");
+		System.out.println(view.getPlayers());
+		
+				
 		Map<Colour, Integer> playersLocations = getPlayersLocations();
 		//we're mrX so we should update with our true location that only we know every round
 		playersLocations.put(view.getCurrentPlayer(), currentLocation);
@@ -29,7 +35,7 @@ public class MrXPlayer extends AIMasterRace {
 		
 		//running AI
 		//System.out.println("AHA: " + numberOfPlayers);
-		miniMax(0, 0, playersLocations, playersTickets);
+		miniMaxWithAlphaBetaPruning(0, 0, Long.MIN_VALUE, Long.MAX_VALUE, playersLocations, playersTickets);
 		//donezo
 		//System.out.println("System generated possible moves:");
 		//System.out.println(possibleMoves);
@@ -51,10 +57,11 @@ public class MrXPlayer extends AIMasterRace {
 		return "Player is of class type: MrXPlayer with colour: " + colour;
 	}
 	
-	private int miniMax(int depth, int currentPlayer, Map<Colour, Integer> playersLocations, Map<Colour, Map<Ticket, Integer>> playersTickets) {
+	private int miniMaxWithAlphaBetaPruning(int depth, int currentPlayer, long alpha, long beta, Map<Colour, Integer> playersLocations, Map<Colour, Map<Ticket, Integer>> playersTickets) {
 		//System.out.println("ViewPlayers order: ");
 		//System.out.println(playerOrder);
 		//System.out.println("Mini-Max depth: " + depth + " for player: " + view.getPlayers().get(currentPlayer));
+		//System.out.println("depth: " + depth);
 		if(depth == depthToSimulate) {
 			//System.out.println("BASE CASE REACHED at depth: " + depthToSimulate);
 			//System.out.println("depthToSimulate: " + depthToSimulate);
@@ -68,7 +75,9 @@ public class MrXPlayer extends AIMasterRace {
 		//System.out.println("All legal moves for player: " + player + " at depth: " + depth + ", are:");
 		//System.out.println(legalMoves);
 		//if we get out of bounds, we go back to the starting index
+		//System.out.println("NumberOfPlayers: " + numberOfPlayers);
 		int nextPlayer = (currentPlayer + 1) % numberOfPlayers;
+		int finalScore = 0;
 		
 		//now handle the different cases by backtracking the different possibilities for making a move:
 		if(Utility.isPlayerMrX(player)) {
@@ -89,12 +98,14 @@ public class MrXPlayer extends AIMasterRace {
 				//simulate going to end location
 				playersLocations.put(player, endLocation);
 				//we're ready to dive in!
-				int heuristicScore = miniMax(depth + 1, nextPlayer, playersLocations, playersTickets);
+				int heuristicScore = miniMaxWithAlphaBetaPruning(depth + 1, nextPlayer, alpha, beta, playersLocations, playersTickets);
 				if(heuristicScore > maximizedScore) {
 					//we've found a better move :)
 					maximizedScore = heuristicScore;
 					maximizedMove = move;
 				}
+				alpha = Math.max(alpha, maximizedScore);
+				
 				//we're done examining this scenario, now revert changes
 				//return tickets:
 				for(Ticket ticket : necessaryTickets) {
@@ -104,7 +115,9 @@ public class MrXPlayer extends AIMasterRace {
 				//return to original location
 				playersLocations.put(player, currentPlayerLocation);
 				currentDepthOtimalMove = maximizedMove; //retain optimal move
+				if(beta <= alpha) break; //beta cut-off
 			}
+			finalScore = maximizedScore;
 		}
 		else {
 			//we're a cop and therefore ZE ENEMY!!!
@@ -124,12 +137,13 @@ public class MrXPlayer extends AIMasterRace {
 				//simulate going to end location
 				playersLocations.put(player, endLocation);
 				//we're ready to dive in!
-				int heuristicScore = miniMax(depth + 1, nextPlayer, playersLocations, playersTickets);
+				int heuristicScore = miniMaxWithAlphaBetaPruning(depth + 1, nextPlayer, alpha, beta, playersLocations, playersTickets);
 				if(heuristicScore < minimizedScore) {
 					//we've found a better move :)
 					minimizedScore = heuristicScore;
 					minimizedMove = move;
 				}
+				beta = Math.min(beta, minimizedScore);
 				//we're done examining this scenario, now revert changes
 				//return tickets:
 				for(Ticket ticket : necessaryTickets) {
@@ -139,11 +153,14 @@ public class MrXPlayer extends AIMasterRace {
 				//return to original location
 				playersLocations.put(player, currentPlayerLocation);
 				currentDepthOtimalMove = minimizedMove; //retain optimal move
+				if(beta <= alpha) break; //alpha cut-off
 			}
+			finalScore = minimizedScore;
 		}
 		//System.out.println("Optimal move for player: " + player + " at depth: " + depth + " is: " + currentDepthOtimalMove);
 		if(depth == 0) optimalMove = currentDepthOtimalMove;
-		return 0;
+		if(depth == 0) System.out.println("Score for the move: " + finalScore);
+		return finalScore;
 	}
 	
 	/**
