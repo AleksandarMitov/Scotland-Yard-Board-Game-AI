@@ -7,7 +7,7 @@ public class MrXPlayer extends AIMasterRace {
 	/**
 	 * How many moves deep should the AI look
 	 */
-	private final int depthToSimulate = 10;
+	private final int depthToSimulate = 7;
 	
 	/**
 	 * for convenience and used later, holds number of players
@@ -40,7 +40,7 @@ public class MrXPlayer extends AIMasterRace {
 		for(Integer startingLocation : distances.keySet()) {
 			for(Integer endLocation : distances.get(startingLocation).keySet()) {
 				int dist = distances.get(startingLocation).get(endLocation);
-				System.out.println("Distance from: " + startingLocation + " to: " + endLocation + ", is: " + dist);
+				//System.out.println("Distance from: " + startingLocation + " to: " + endLocation + ", is: " + dist);
 			}
 		}
 		//end debug
@@ -163,7 +163,7 @@ public class MrXPlayer extends AIMasterRace {
 			}
 			finalScore = minimizedScore;
 		}
-		//System.out.println("Optimal move for player: " + player + " at depth: " + depth + " is: " + currentDepthOtimalMove);
+		//System.out.println("Optimal move for player: " + player + " at depth: " + depth + " is: " + currentDepthOtimalMove + " with heuristic score: " + finalScore);
 		if(depth == 0) optimalMove = currentDepthOtimalMove;
 		if(depth == 0) System.out.println("For the move: " + optimalMove + ", the heuristic score is: " + finalScore);
 		return finalScore;
@@ -177,12 +177,42 @@ public class MrXPlayer extends AIMasterRace {
 	 * @return
 	 */
 	private long evaluateState(Map<Colour, Integer> playersLocations, ScotlandYardGraph graph, Map<Colour, Map<Ticket, Integer>> playersTickets) {
-		//Currently picks random shit
-		//TODO: Make some decent implementation
-		Integer[] arr = {0, 1, -1};
-		List<Integer> numbers = new ArrayList<Integer>(Arrays.asList(arr));
-		Collections.shuffle(numbers);
-		return numbers.get(0);
+		List<Colour> players = getPlayersInOrder(view);
+		List<Integer> distancesFromMrXToDetectives = new ArrayList<Integer>();
+		int mrXLocation = playersLocations.get(colour);
+		for(Colour player : players) {
+			if(Utility.isPlayerMrX(player)) continue;
+			int detectiveLocation = playersLocations.get(player);
+			int currentDistance = distances.get(mrXLocation).get(detectiveLocation);
+			distancesFromMrXToDetectives.add(currentDistance);
+			//System.out.println("Distance from: " + colour + " to: " + player + ", is: " + currentDistance);
+		}
+		long heuristic = 0;
+		for(Integer distance : distancesFromMrXToDetectives) {
+			int distanceWeight = 210 / distance;
+			heuristic -= distanceWeight;
+		}
+		
+		//now if there are more means of transport on Mr.X's position, increase the value of the score
+		//after all, the more options, the better escape plan we can conceive
+		List<Edge<Integer, Transport>> edges = graph.getEdgesFrom(graph.getNode(mrXLocation));
+		for(Edge<Integer, Transport> edge : edges) {
+			Transport kindOfTransport = edge.getData();
+			int value = 10;
+			switch(kindOfTransport) {
+			case Boat:
+				value = 100;
+				break;
+			case Underground:
+				value = 60;
+				break;
+			case Bus:
+				value = 25;
+				break;
+			}
+			heuristic += value;
+		}
+		return heuristic;
 	}
 	
 	/**
