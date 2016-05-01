@@ -176,4 +176,13 @@ public abstract class AIMasterRace implements Player, Spectator {
     	if(Utility.isPlayerDetective(playerColour) && possibleMoves.isEmpty()) possibleMoves.add(MovePass.instance(playerColour));
         return possibleMoves;
     }
+    
+    protected List<Colour> getPlayersInOrder(ScotlandYardView view) {
+    	List<Colour> inOrder = new ArrayList<Colour>();
+    	inOrder.add(Utility.getMrXColour());
+    	for(Colour player : view.getPlayers()) {
+			if(Utility.isPlayerDetective(player)) inOrder.add(player);
+		}
+    	return inOrder;
+    }
 }

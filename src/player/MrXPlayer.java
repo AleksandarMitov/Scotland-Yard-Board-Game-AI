@@ -29,11 +29,7 @@ public class MrXPlayer extends AIMasterRace {
 	protected Move chooseMove(int currentLocation, List<Move> possibleMoves) {
 		numberOfPlayers = view.getPlayers().size();
 		//now working around a bug with the ScotlandYardView.getPlayers() implementation!? Black player isn't always first
-		playerOrder.clear();
-		playerOrder.add(Utility.getMrXColour());
-		for(Colour player : view.getPlayers()) {
-			if(Utility.isPlayerDetective(player)) playerOrder.add(player);
-		}
+		playerOrder = getPlayersInOrder(view);
 				
 		Map<Colour, Integer> playersLocations = getPlayersLocations();
 		//we're mrX so we should update with our true location that only we know every round
