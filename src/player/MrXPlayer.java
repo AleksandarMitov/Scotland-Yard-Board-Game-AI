@@ -1,28 +1,49 @@
 package player;
 import java.util.*;
 import scotlandyard.*;
+import graph.*;
 
 public class MrXPlayer extends AIMasterRace {
 	/**
 	 * How many moves deep should the AI look
 	 */
 	private final int depthToSimulate = 10;
+	
 	/**
 	 * for convenience and used later, holds number of players
 	 */
 	private int numberOfPlayers;
+	
 	/**
 	 * place to hold our computed move from the AI
 	 */
 	private Move optimalMove = null;
+	
 	/**
 	 * Holds the players' order. Was forced to do it since I think there are some bugs
 	 * in the ScotlandYardView API
 	 */
 	private List<Colour> playerOrder = new ArrayList<Colour>();
 	
+	/**
+	 * Holds the distances between pairs of nodes in the game graph
+	 * the distance is basically the number of single moves you'd have to make from the
+	 * first node to reach the second
+	 */
+	private Map<Integer, Map<Integer, Integer>> distances; 
+	
 	public MrXPlayer(Colour colour, ScotlandYardView view, String mapFilename) {
 		super(colour, view, mapFilename);
+		distances = runBFSOnGameGraph();
+		
+		//debugging
+		for(Integer startingLocation : distances.keySet()) {
+			for(Integer endLocation : distances.get(startingLocation).keySet()) {
+				int dist = distances.get(startingLocation).get(endLocation);
+				System.out.println("Distance from: " + startingLocation + " to: " + endLocation + ", is: " + dist);
+			}
+		}
+		//end debug
 	}
 	
 	@Override
@@ -162,6 +183,54 @@ public class MrXPlayer extends AIMasterRace {
 		List<Integer> numbers = new ArrayList<Integer>(Arrays.asList(arr));
 		Collections.shuffle(numbers);
 		return numbers.get(0);
+	}
+	
+	/**
+	 * Runs a BFS from each node to find all-pairs distances in O(N^2) total time complexity
+	 */
+	private Map<Integer, Map<Integer, Integer>> runBFSOnGameGraph() {
+		Map<Integer, Map<Integer, Integer>> result = new HashMap<Integer, Map<Integer, Integer>>();
+		List<Node<Integer>> graphNodes = graph.getNodes();
+		for(Node<Integer> node : graphNodes) {
+			int mapLocation = node.getIndex();
+			Map<Integer, Integer> distancesToRestOfNodes = BFS(node);
+			result.put(mapLocation, distancesToRestOfNodes);
+		}
+		return result;
+	}
+	
+	/**
+	 * We apply a heuristic: We ignore all the edges (so possible paths) that use
+	 * the Underground or a boat as a means of transport!
+	 * Runs a Breadth-First search starting from the root node to find
+	 * the distances to every other node in the graph. Runs in O(N) time and memory
+	 * @param rootNode
+	 * @return a map holding the distances from root to every node in the graph 
+	 */
+	private Map<Integer, Integer> BFS(Node<Integer> rootNode) {
+		Set<Node<Integer>> visitedNodes = new HashSet<Node<Integer>>();
+		//key is a node index, value is distance(root, currentNodeIndex)
+		Map<Integer, Integer> distancesFromRoot = new HashMap<Integer, Integer>();
+		distancesFromRoot.put(rootNode.getIndex(), 0);
+		visitedNodes.add(rootNode);
+		Queue<Node<Integer>> queue = new LinkedList<Node<Integer>>();
+		queue.add(rootNode);
+		while(!queue.isEmpty()) {
+			Node<Integer> currentNode = queue.remove();
+			List<Edge<Integer, Transport>> edges = graph.getEdgesFrom(currentNode);
+			for(Edge<Integer, Transport> edge : edges) {
+				Transport kindOfTransport = edge.getData();
+				//now if the means of transport is Underground or a boat, we skip the edge
+				if(kindOfTransport == Transport.Underground || kindOfTransport == Transport.Boat) continue;
+				Node<Integer> target = edge.getTarget();
+				if(visitedNodes.contains(target)) continue; //we skip already visited nodes
+				//now set distance from the root to target using currentNode
+				distancesFromRoot.put(target.getIndex(), distancesFromRoot.get(currentNode.getIndex()) + 1);
+				visitedNodes.add(target);
+				queue.add(target);
+			}
+		}
+		return distancesFromRoot;
 	}
 	
 	@Override
