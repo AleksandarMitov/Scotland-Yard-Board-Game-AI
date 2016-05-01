@@ -3,11 +3,20 @@ import java.util.*;
 import scotlandyard.*;
 
 public class MrXPlayer extends AIMasterRace {
-	private final int depthToSimulate = 3;
+	private final int depthToSimulate = 8;
+	private final int numberOfPlayers;
 	private Move optimalMove = null;
+	private List<Colour> playerOrder = new ArrayList<Colour>();
 	
 	public MrXPlayer(Colour colour, ScotlandYardView view, String mapFilename) {
 		super(colour, view, mapFilename);
+		numberOfPlayers = view.getPlayers().size();
+		
+		//now working around a bug with the ScotlandYardView.getPlayers() implementation!? Black player isn't always first
+		playerOrder.add(Utility.getMrXColour());
+		for(Colour player : view.getPlayers()) {
+			if(Utility.isPlayerDetective(player)) playerOrder.add(player);
+		}
 	}
 	
 	@Override
@@ -19,6 +28,7 @@ public class MrXPlayer extends AIMasterRace {
 		List<Move> legalMoves = generateMoves(view.getCurrentPlayer(), playersLocations, playersTickets);
 		
 		//running AI
+		//System.out.println("AHA: " + numberOfPlayers);
 		miniMax(0, 0, playersLocations, playersTickets);
 		//donezo
 		//System.out.println("System generated possible moves:");
@@ -42,19 +52,21 @@ public class MrXPlayer extends AIMasterRace {
 	}
 	
 	private int miniMax(int depth, int currentPlayer, Map<Colour, Integer> playersLocations, Map<Colour, Map<Ticket, Integer>> playersTickets) {
-		System.out.println("Mini-Max depth: " + depth + " for player: " + view.getPlayers().get(currentPlayer));
-		if(currentPlayer == 0 && depth >= depthToSimulate*numberOfPlayers) {
-			System.out.println("BASE CASE REACHED");
+		//System.out.println("ViewPlayers order: ");
+		//System.out.println(playerOrder);
+		//System.out.println("Mini-Max depth: " + depth + " for player: " + view.getPlayers().get(currentPlayer));
+		if(depth == depthToSimulate) {
+			//System.out.println("BASE CASE REACHED at depth: " + depthToSimulate);
+			//System.out.println("depthToSimulate: " + depthToSimulate);
 			return evaluateState(playersLocations, graph); //we've reached the depth, now apply heuristic
 		}
-		System.out.println("BLA BLA BLA");
 		Move currentDepthOtimalMove = null;
 		
-		Colour player = view.getPlayers().get(currentPlayer);
+		Colour player = playerOrder.get(currentPlayer);
 		int currentPlayerLocation = playersLocations.get(player);
 		List<Move> legalMoves = generateMoves(player, playersLocations, playersTickets);
-		System.out.println("All legal moves for player: " + player + " at depth: " + depth + ", are:");
-		System.out.println(legalMoves);
+		//System.out.println("All legal moves for player: " + player + " at depth: " + depth + ", are:");
+		//System.out.println(legalMoves);
 		//if we get out of bounds, we go back to the starting index
 		int nextPlayer = (currentPlayer + 1) % numberOfPlayers;
 		
@@ -65,7 +77,7 @@ public class MrXPlayer extends AIMasterRace {
 			Move maximizedMove = MovePass.instance(player);
 			//now, simulate each possible move and then dig deeper
 			for(Move move : legalMoves) {
-				System.out.println("Exploring move for player: " + player + " at depth: " + depth + ", : " + move);
+				//System.out.println("Exploring move for player: " + player + " at depth: " + depth + ", : " + move);
 				List<Ticket> necessaryTickets = Utility.getNecessaryTickets(move);
 				int endLocation = Utility.getMoveEndLocation(currentPlayerLocation, move);
 				//now should recall that AIMasterRace#generateMoves already makes sure we have the tickets for the move
@@ -100,6 +112,7 @@ public class MrXPlayer extends AIMasterRace {
 			Move minimizedMove = MovePass.instance(player);
 			//now, simulate each possible move and then dig deeper
 			for(Move move : legalMoves) {
+				//System.out.println("Exploring move for player: " + player + " at depth: " + depth + ", : " + move);
 				List<Ticket> necessaryTickets = Utility.getNecessaryTickets(move);
 				int endLocation = Utility.getMoveEndLocation(currentPlayerLocation, move);
 				//now should recall that AIMasterRace#generateMoves already makes sure we have the tickets for the move
@@ -128,7 +141,7 @@ public class MrXPlayer extends AIMasterRace {
 				currentDepthOtimalMove = minimizedMove; //retain optimal move
 			}
 		}
-		System.out.println("Optimal move for player: " + player + " at depth: " + depth + " is: " + currentDepthOtimalMove);
+		//System.out.println("Optimal move for player: " + player + " at depth: " + depth + " is: " + currentDepthOtimalMove);
 		if(depth == 0) optimalMove = currentDepthOtimalMove;
 		return 0;
 	}
