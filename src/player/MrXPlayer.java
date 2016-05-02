@@ -7,7 +7,7 @@ public class MrXPlayer extends AIMasterRace {
 	/**
 	 * How many moves deep should the AI look
 	 */
-	private final int depthToSimulate = 9;
+	private final int depthToSimulate = 8;
 	
 	/**
 	 * for convenience and used later, holds number of players
