@@ -164,7 +164,7 @@ public class DetectivePlayer extends AIMasterRace {
 		//if he's been revealed at least once
 		if(mrXLocation != 0) distance = distances.get(detectiveLocation).get(mrXLocation);
 		long heuristic = 0;
-		heuristic = -40*distance;
+		heuristic = -80*distance;
 		
 		//now if there are more means of transport on detective's position, increase the value of the score
 		//after all, the more options, the better plan we can conceive
