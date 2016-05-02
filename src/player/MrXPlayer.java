@@ -37,6 +37,10 @@ public class MrXPlayer extends AIMasterRace {
 		distances = runBFSOnGameGraph();
 	}
 	
+	/**
+	 * Implements the AIMasterRace abstract class method
+	 * Uses Iterative deepening to find a winning move as fast as possible
+	 */
 	@Override
 	protected Move chooseMove(int currentLocation, List<Move> possibleMoves) {
 		numberOfPlayers = view.getPlayers().size();
@@ -65,7 +69,7 @@ public class MrXPlayer extends AIMasterRace {
 	 * @param beta the beta value
 	 * @param playersLocations a map holding the location for each player
 	 * @param playersTickets a map holding the tickets for each player
-	 * @return
+	 * @return a heuristic value evaluating the potential to win
 	 */
 	private long miniMaxWithAlphaBetaPruning(int depth, int currentPlayer, long alpha, long beta, Map<Colour, Integer> playersLocations, Map<Colour, Map<Ticket, Integer>> playersTickets) {
 		if(mrXIsBusted(playersLocations) && !Utility.isPlayerMrX(playerOrder.get(currentPlayer))) return Long.MIN_VALUE; //we definitely do NOT want to happen
@@ -165,9 +169,10 @@ public class MrXPlayer extends AIMasterRace {
 	/**
 	 * Heuristically evaluate the game state
 	 * Higher score indicates better chances for MrX to win
+	 * We take into account the distances to detectives
+	 * and the available types of transport
 	 * @param playersLocations
 	 * @param graph
-	 * @return
 	 */
 	private long evaluateState(Map<Colour, Integer> playersLocations, ScotlandYardGraph graph, Map<Colour, Map<Ticket, Integer>> playersTickets) {
 		List<Colour> players = getPlayersInOrder(view);
@@ -256,6 +261,10 @@ public class MrXPlayer extends AIMasterRace {
 		return distancesFromRoot;
 	}
 	
+	/**
+	 * Checks if mr.X is on a position that is also occupied by a detective
+	 * @param playersLocations
+	 */
 	private boolean mrXIsBusted(Map<Colour, Integer> playersLocations) {
 		for(Colour player : playersLocations.keySet()) {
 			if(Utility.isPlayerDetective(player) && playersLocations.get(player).equals(playersLocations.get(Utility.getMrXColour()))) return true;
