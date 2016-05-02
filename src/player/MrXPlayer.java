@@ -50,12 +50,25 @@ public class MrXPlayer extends AIMasterRace {
 		Map<Colour, Integer> playersLocations = getPlayersLocations();
 		//we're mrX so we should update with our true location that only we know every round
 		playersLocations.put(colour, currentLocation);
+		
+		//running AI
+		for(int i = 1; i <= depthToSimulate; ++i) {
+			Map<Colour, Map<Ticket, Integer>> playersTickets = getPlayersTickets();	
+			long score = miniMaxWithAlphaBetaPruning(i, 0, Long.MIN_VALUE, Long.MAX_VALUE, playersLocations, playersTickets);
+			System.out.println("For depth: " + i + ", the optimal move is: " + optimalMove);
+			if(score == Long.MAX_VALUE) break;
+		}
+		//donezo
+		
+		
+		/*
 		Map<Colour, Map<Ticket, Integer>> playersTickets = getPlayersTickets();
 		List<Move> legalMoves = generateMoves(colour, playersLocations, playersTickets);
 		
 		//running AI
 		miniMaxWithAlphaBetaPruning(0, 0, Long.MIN_VALUE, Long.MAX_VALUE, playersLocations, playersTickets);
 		//donezo
+		 * */
 		return optimalMove; //result from running the Mini-Max, Alpha-Beta pruning, award winning algorithm
 	}
 	
@@ -73,7 +86,7 @@ public class MrXPlayer extends AIMasterRace {
 	 */
 	private long miniMaxWithAlphaBetaPruning(int depth, int currentPlayer, long alpha, long beta, Map<Colour, Integer> playersLocations, Map<Colour, Map<Ticket, Integer>> playersTickets) {
 		if(mrXIsBusted(playersLocations) && !Utility.isPlayerMrX(playerOrder.get(currentPlayer))) return Long.MIN_VALUE; //we definitely do NOT want to happen
-		if(depth == depthToSimulate) return evaluateState(playersLocations, graph, playersTickets); //we've reached the depth, now apply heuristic
+		if(depth == 0) return evaluateState(playersLocations, graph, playersTickets); //we've reached the depth, now apply heuristic
 			
 		Move currentDepthOtimalMove = null;
 		
@@ -102,7 +115,7 @@ public class MrXPlayer extends AIMasterRace {
 				//simulate going to end location
 				playersLocations.put(player, endLocation);
 				//we're ready to dive in!
-				long heuristicScore = miniMaxWithAlphaBetaPruning(depth + 1, nextPlayer, alpha, beta, playersLocations, playersTickets);
+				long heuristicScore = miniMaxWithAlphaBetaPruning(depth - 1, nextPlayer, alpha, beta, playersLocations, playersTickets);
 				if(heuristicScore > maximizedScore) {
 					//we've found a better move :)
 					maximizedScore = heuristicScore;
@@ -140,7 +153,7 @@ public class MrXPlayer extends AIMasterRace {
 				//simulate going to end location
 				playersLocations.put(player, endLocation);
 				//we're ready to dive in!
-				long heuristicScore = miniMaxWithAlphaBetaPruning(depth + 1, nextPlayer, alpha, beta, playersLocations, playersTickets);
+				long heuristicScore = miniMaxWithAlphaBetaPruning(depth - 1, nextPlayer, alpha, beta, playersLocations, playersTickets);
 				if(heuristicScore < minimizedScore) {
 					//we've found a better move :)
 					minimizedScore = heuristicScore;
@@ -161,8 +174,8 @@ public class MrXPlayer extends AIMasterRace {
 			finalScore = minimizedScore;
 		}
 		//System.out.println("Optimal move for player: " + player + " at depth: " + depth + " is: " + currentDepthOtimalMove + " with heuristic score: " + finalScore);
-		if(depth == 0) optimalMove = currentDepthOtimalMove;
-		if(depth == 0) System.out.println("For the move: " + optimalMove + ", the heuristic score is: " + finalScore);
+		if(Utility.isPlayerMrX(player)) optimalMove = currentDepthOtimalMove;
+		//System.out.println("For the move: " + optimalMove + ", the heuristic score is: " + finalScore);
 		return finalScore;
 	}
 	
