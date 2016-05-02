@@ -7,7 +7,7 @@ public class DetectivePlayer extends AIMasterRace {
 	/**
 	 * How many moves deep should the AI look
 	 */
-	private final int depthToSimulate = 8;
+	private final int depthToSimulate = 9;
 	
 	/**
 	 * Place to hold our computed move from the AI

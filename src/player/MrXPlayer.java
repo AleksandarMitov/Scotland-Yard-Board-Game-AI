@@ -7,7 +7,7 @@ public class MrXPlayer extends AIMasterRace {
 	/**
 	 * How many moves deep should the AI look
 	 */
-	private final int depthToSimulate = 7;
+	private final int depthToSimulate = 9;
 	
 	/**
 	 * for convenience and used later, holds number of players
@@ -200,7 +200,8 @@ public class MrXPlayer extends AIMasterRace {
 		}
 		long heuristic = 0;
 		for(Integer distance : distancesFromMrXToDetectives) {
-			int distanceWeight = 210 / distance;
+			long distanceWeight = 100000;
+			if(distance != 0) distanceWeight = 210 / distance;
 			heuristic -= distanceWeight;
 		}
 		
