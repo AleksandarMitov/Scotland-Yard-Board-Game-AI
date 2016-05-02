@@ -77,8 +77,8 @@ public class MrXPlayer extends AIMasterRace {
 	 * @return
 	 */
 	private long miniMaxWithAlphaBetaPruning(int depth, int currentPlayer, long alpha, long beta, Map<Colour, Integer> playersLocations, Map<Colour, Map<Ticket, Integer>> playersTickets) {
+		if(mrXIsBusted(playersLocations) && !Utility.isPlayerMrX(playerOrder.get(currentPlayer))) return Long.MIN_VALUE; //we definitely do NOT want to happen
 		if(depth == depthToSimulate) return evaluateState(playersLocations, graph, playersTickets); //we've reached the depth, now apply heuristic
-		if(mrXIsBusted(playersLocations)) return Long.MIN_VALUE; //we definitely do NOT want to happen
 			
 		Move currentDepthOtimalMove = null;
 		
