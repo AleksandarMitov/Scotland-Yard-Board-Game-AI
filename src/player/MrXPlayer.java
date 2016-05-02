@@ -30,7 +30,7 @@ public class MrXPlayer extends AIMasterRace {
 	 * the distance is basically the number of single moves you'd have to make from the
 	 * first node to reach the second
 	 */
-	private Map<Integer, Map<Integer, Integer>> distances; 
+	private Map<Integer, Map<Integer, Integer>> distances;
 	
 	public MrXPlayer(Colour colour, ScotlandYardView view, String mapFilename) {
 		super(colour, view, mapFilename);
@@ -78,6 +78,8 @@ public class MrXPlayer extends AIMasterRace {
 	 */
 	private long miniMaxWithAlphaBetaPruning(int depth, int currentPlayer, long alpha, long beta, Map<Colour, Integer> playersLocations, Map<Colour, Map<Ticket, Integer>> playersTickets) {
 		if(depth == depthToSimulate) return evaluateState(playersLocations, graph, playersTickets); //we've reached the depth, now apply heuristic
+		if(mrXIsBusted(playersLocations)) return Long.MIN_VALUE; //we definitely do NOT want to happen
+			
 		Move currentDepthOtimalMove = null;
 		
 		Colour player = playerOrder.get(currentPlayer);
@@ -261,6 +263,13 @@ public class MrXPlayer extends AIMasterRace {
 			}
 		}
 		return distancesFromRoot;
+	}
+	
+	private boolean mrXIsBusted(Map<Colour, Integer> playersLocations) {
+		for(Colour player : playersLocations.keySet()) {
+			if(Utility.isPlayerDetective(player) && playersLocations.get(player).equals(playersLocations.get(Utility.getMrXColour()))) return true;
+		}
+		return false;
 	}
 	
 	@Override

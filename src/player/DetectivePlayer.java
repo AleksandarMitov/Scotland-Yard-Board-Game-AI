@@ -1,37 +1,42 @@
 package player;
 import java.util.*;
+
+import graph.Edge;
+import graph.Node;
 import scotlandyard.*;
 
 public class DetectivePlayer extends AIMasterRace {
 	/**
 	 * How many moves deep should the AI look
 	 */
-	private final int depthToSimulate = 10;
+	private final int depthToSimulate = 8;
 	/**
 	 * place to hold our computed move from the AI
 	 */
 	private Move optimalMove = null;
+	
 	/**
-	 * Holds the players' order. Was forced to do it since I think there are some bugs
-	 * in the ScotlandYardView API
+	 * Holds the distances between pairs of nodes in the game graph
+	 * the distance is basically the number of single moves you'd have to make from the
+	 * first node to reach the second
 	 */
-	private List<Colour> playerOrder = new ArrayList<Colour>();
+	private Map<Integer, Map<Integer, Integer>> distances;
 	
 	public DetectivePlayer(Colour colour, ScotlandYardView view, String mapFilename) {
 		super(colour, view, mapFilename);
+		distances = runBFSOnGameGraph();
 	}
 	
 	@Override
 	protected Move chooseMove(int currentLocation, List<Move> possibleMoves) {
-		//now working around a bug with the ScotlandYardView.getPlayers() implementation!? Black player isn't always first
-		playerOrder = getPlayersInOrder(view);
-				
-		Map<Colour, Integer> playersLocations = getPlayersLocations();
-		Map<Colour, Map<Ticket, Integer>> playersTickets = getPlayersTickets();
-		List<Move> legalMoves = generateMoves(colour, playersLocations, playersTickets);
-		
 		//running AI
-		miniMaxWithAlphaBetaPruning(0, colour, true, Long.MIN_VALUE, Long.MAX_VALUE, playersLocations, playersTickets);
+		for(int i = 1; i <= depthToSimulate; ++i) {
+			Map<Colour, Integer> playersLocations = getPlayersLocations();
+			Map<Colour, Map<Ticket, Integer>> playersTickets = getPlayersTickets();	
+			long score = miniMaxWithAlphaBetaPruning(i, colour, true, Long.MIN_VALUE, Long.MAX_VALUE, playersLocations, playersTickets);
+			System.out.println("For depth: " + i + ", the optimal move is: " + optimalMove);
+			if(score == Long.MAX_VALUE) break;
+		}
 		//donezo
 		return optimalMove; //result from running the Mini-Max, Alpha-Beta pruning, award winning algorithm
 	}
@@ -49,7 +54,8 @@ public class DetectivePlayer extends AIMasterRace {
 	 * @return
 	 */
 	private long miniMaxWithAlphaBetaPruning(int depth, Colour whichDetective, boolean isDetectiveTurn, long alpha, long beta, Map<Colour, Integer> playersLocations, Map<Colour, Map<Ticket, Integer>> playersTickets) {
-		if(depth == depthToSimulate) return evaluateState(playersLocations, graph, playersTickets); //we've reached the depth, now apply heuristic
+		if(mrXIsBusted(playersLocations) && !isDetectiveTurn) return Long.MAX_VALUE; //that's what we're aiming for
+		if(depth == 0) return evaluateState(playersLocations, graph, playersTickets); //we've reached the depth, now apply heuristic
 		Move currentDepthOtimalMove = null;
 		
 		Colour player = isDetectiveTurn ? whichDetective : Utility.getMrXColour();
@@ -75,7 +81,7 @@ public class DetectivePlayer extends AIMasterRace {
 				//simulate going to end location
 				playersLocations.put(player, endLocation);
 				//we're ready to dive in!
-				long heuristicScore = miniMaxWithAlphaBetaPruning(depth + 1, whichDetective, !isDetectiveTurn, alpha, beta, playersLocations, playersTickets);
+				long heuristicScore = miniMaxWithAlphaBetaPruning(depth - 1, whichDetective, !isDetectiveTurn, alpha, beta, playersLocations, playersTickets);
 				if(heuristicScore > maximizedScore) {
 					//we've found a better move :)
 					maximizedScore = heuristicScore;
@@ -113,7 +119,7 @@ public class DetectivePlayer extends AIMasterRace {
 				//simulate going to end location
 				playersLocations.put(player, endLocation);
 				//we're ready to dive in!
-				long heuristicScore = miniMaxWithAlphaBetaPruning(depth + 1, whichDetective, !isDetectiveTurn, alpha, beta, playersLocations, playersTickets);
+				long heuristicScore = miniMaxWithAlphaBetaPruning(depth - 1, whichDetective, !isDetectiveTurn, alpha, beta, playersLocations, playersTickets);
 				if(heuristicScore < minimizedScore) {
 					//we've found a better move :)
 					minimizedScore = heuristicScore;
@@ -134,8 +140,9 @@ public class DetectivePlayer extends AIMasterRace {
 			finalScore = minimizedScore;
 		}
 		//System.out.println("Optimal move for player: " + player + " at depth: " + depth + " is: " + currentDepthOtimalMove);
-		if(depth == 0) optimalMove = currentDepthOtimalMove;
-		if(depth == 0) System.out.println("For the move: " + optimalMove + ", the heuristic score is: " + finalScore);
+		if(isDetectiveTurn) {
+			optimalMove = currentDepthOtimalMove;
+		}
 		return finalScore;
 	}
 	
@@ -147,12 +154,87 @@ public class DetectivePlayer extends AIMasterRace {
 	 * @return
 	 */
 	private long evaluateState(Map<Colour, Integer> playersLocations, ScotlandYardGraph graph, Map<Colour, Map<Ticket, Integer>> playersTickets) {
-		//Currently picks random shit
-		//TODO: Make some decent implementation
-		Integer[] arr = {0, 1, -1};
-		List<Integer> numbers = new ArrayList<Integer>(Arrays.asList(arr));
-		Collections.shuffle(numbers);
-		return numbers.get(0);
+		int detectiveLocation = playersLocations.get(colour);
+		int mrXLocation = playersLocations.get(Utility.getMrXColour());
+		int distance = 0;
+		//if he's been revealed at least once
+		if(mrXLocation != 0) distance = distances.get(detectiveLocation).get(mrXLocation);
+		long heuristic = 0;
+		heuristic = -20*distance;
+		
+		//now if there are more means of transport on detective's position, increase the value of the score
+		//after all, the more options, the better plan we can conceive
+		List<Edge<Integer, Transport>> edges = graph.getEdgesFrom(graph.getNode(detectiveLocation));
+		for(Edge<Integer, Transport> edge : edges) {
+			Transport kindOfTransport = edge.getData();
+			int value = 10;
+			switch(kindOfTransport) {
+			case Underground:
+				value = 20;
+				break;
+			case Bus:
+				value = 10;
+				break;
+			}
+			heuristic += value;
+		}
+		
+		return heuristic;
+	}
+	
+	/**
+	 * Runs a BFS from each node to find all-pairs distances in O(N^2) total time complexity
+	 */
+	private Map<Integer, Map<Integer, Integer>> runBFSOnGameGraph() {
+		Map<Integer, Map<Integer, Integer>> result = new HashMap<Integer, Map<Integer, Integer>>();
+		List<Node<Integer>> graphNodes = graph.getNodes();
+		for(Node<Integer> node : graphNodes) {
+			int mapLocation = node.getIndex();
+			Map<Integer, Integer> distancesToRestOfNodes = BFS(node);
+			result.put(mapLocation, distancesToRestOfNodes);
+		}
+		return result;
+	}
+	
+	/**
+	 * We apply a heuristic: We ignore all the edges (so possible paths) that use
+	 * the Underground or a boat as a means of transport!
+	 * Runs a Breadth-First search starting from the root node to find
+	 * the distances to every other node in the graph. Runs in O(N) time and memory
+	 * @param rootNode
+	 * @return a map holding the distances from root to every node in the graph 
+	 */
+	private Map<Integer, Integer> BFS(Node<Integer> rootNode) {
+		Set<Node<Integer>> visitedNodes = new HashSet<Node<Integer>>();
+		//key is a node index, value is distance(root, currentNodeIndex)
+		Map<Integer, Integer> distancesFromRoot = new HashMap<Integer, Integer>();
+		distancesFromRoot.put(rootNode.getIndex(), 0);
+		visitedNodes.add(rootNode);
+		Queue<Node<Integer>> queue = new LinkedList<Node<Integer>>();
+		queue.add(rootNode);
+		while(!queue.isEmpty()) {
+			Node<Integer> currentNode = queue.remove();
+			List<Edge<Integer, Transport>> edges = graph.getEdgesFrom(currentNode);
+			for(Edge<Integer, Transport> edge : edges) {
+				Transport kindOfTransport = edge.getData();
+				//now if the means of transport is Underground or a boat, we skip the edge
+				if(kindOfTransport == Transport.Underground || kindOfTransport == Transport.Boat) continue;
+				Node<Integer> target = edge.getTarget();
+				if(visitedNodes.contains(target)) continue; //we skip already visited nodes
+				//now set distance from the root to target using currentNode
+				distancesFromRoot.put(target.getIndex(), distancesFromRoot.get(currentNode.getIndex()) + 1);
+				visitedNodes.add(target);
+				queue.add(target);
+			}
+		}
+		return distancesFromRoot;
+	}
+	
+	private boolean mrXIsBusted(Map<Colour, Integer> playersLocations) {
+		for(Colour player : playersLocations.keySet()) {
+			if(Utility.isPlayerDetective(player) && playersLocations.get(player).equals(playersLocations.get(Utility.getMrXColour()))) return true;
+		}
+		return false;
 	}
 	
 	@Override

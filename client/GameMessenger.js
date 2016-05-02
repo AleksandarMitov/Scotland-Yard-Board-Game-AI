@@ -68,10 +68,10 @@ GameMessenger.prototype.interpretReady = function (messageReady) {
     guiConnector.setPlayerLocations(messageReady['locations']);
     guiConnector.setPlayerTickets(messageReady['tickets']);
     guiConnector.setSetUpViewVisible(false);
-    if(aiMessenger.isConnected() && AIPlayers.length > 0) {
+    this.sendMessage(messageReady);
+	if(aiMessenger.isConnected() && AIPlayers.length > 0) {
         aiMessenger.sendMessage(messageReady);
     }
-    this.sendMessage(messageReady);
 };
 
 /**
@@ -174,8 +174,8 @@ GameMessenger.prototype.interpretConnection = function (messageConnection) {
 GameMessenger.prototype.interpretNotifyTurn = function (messageNotifyTurn) {
     var whichPlayer = messageNotifyTurn['valid_moves'][0].move.colour;
     if(aiMessenger.isConnected() && AIPlayers.indexOf(whichPlayer) != -1) {
-        aiMessenger.sendMessage(messageNotifyTurn);
-		guiConnector.startTurn(messageNotifyTurn, true);
+        guiConnector.startTurn(messageNotifyTurn, true);
+		aiMessenger.sendMessage(messageNotifyTurn);
     }
 	else {
 		guiConnector.startTurn(messageNotifyTurn, false);

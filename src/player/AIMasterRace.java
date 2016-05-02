@@ -30,9 +30,11 @@ public abstract class AIMasterRace implements Player, Spectator {
 
     @Override
     public void notify(int location, List<Move> moves, Integer token, Receiver receiver) {
-        System.out.println("Flexing AI muscles to come up with a move...");
+        System.out.println("It's " + colour + " player's turn");
+    	System.out.println("Flexing AI muscles to come up with a move...");
         Move moveToPlay = chooseMove(location, moves);
-        System.out.println("Piece of cake! Playing move: " + moveToPlay);
+        if(moveToPlay.colour != colour) System.out.println("ERROR WRONG COLOUR!\n\n\n\n");;
+        System.out.println("Piece of cake! Current location: " + location + ", Playing move: " + moveToPlay);
         receiver.playMove(moveToPlay, token);
     }
     
