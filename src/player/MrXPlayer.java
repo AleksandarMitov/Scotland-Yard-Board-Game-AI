@@ -35,15 +35,6 @@ public class MrXPlayer extends AIMasterRace {
 	public MrXPlayer(Colour colour, ScotlandYardView view, String mapFilename) {
 		super(colour, view, mapFilename);
 		distances = runBFSOnGameGraph();
-		
-		//debugging
-		for(Integer startingLocation : distances.keySet()) {
-			for(Integer endLocation : distances.get(startingLocation).keySet()) {
-				int dist = distances.get(startingLocation).get(endLocation);
-				//System.out.println("Distance from: " + startingLocation + " to: " + endLocation + ", is: " + dist);
-			}
-		}
-		//end debug
 	}
 	
 	@Override

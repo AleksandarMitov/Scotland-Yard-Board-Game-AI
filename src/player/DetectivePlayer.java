@@ -1,8 +1,6 @@
 package player;
 import java.util.*;
-
-import graph.Edge;
-import graph.Node;
+import graph.*;
 import scotlandyard.*;
 
 public class DetectivePlayer extends AIMasterRace {
@@ -10,8 +8,9 @@ public class DetectivePlayer extends AIMasterRace {
 	 * How many moves deep should the AI look
 	 */
 	private final int depthToSimulate = 8;
+	
 	/**
-	 * place to hold our computed move from the AI
+	 * Place to hold our computed move from the AI
 	 */
 	private Move optimalMove = null;
 	
@@ -27,6 +26,10 @@ public class DetectivePlayer extends AIMasterRace {
 		distances = runBFSOnGameGraph();
 	}
 	
+	/**
+	 * Implements the AIMasterRace abstract class method
+	 * Uses Iterative deepening to find a winning move as fast as possible
+	 */
 	@Override
 	protected Move chooseMove(int currentLocation, List<Move> possibleMoves) {
 		//running AI
@@ -149,9 +152,10 @@ public class DetectivePlayer extends AIMasterRace {
 	/**
 	 * Heuristically evaluate the game state
 	 * Higher score indicates better chances for the detective to win
+	 * We tale into account the edge distance to mr.X and the
+	 * available types of transport from that position
 	 * @param playersLocations
 	 * @param graph
-	 * @return
 	 */
 	private long evaluateState(Map<Colour, Integer> playersLocations, ScotlandYardGraph graph, Map<Colour, Map<Ticket, Integer>> playersTickets) {
 		int detectiveLocation = playersLocations.get(colour);
@@ -230,6 +234,10 @@ public class DetectivePlayer extends AIMasterRace {
 		return distancesFromRoot;
 	}
 	
+	/**
+	 * Checks if mr.X is on a position that is also occupied by a detective
+	 * @param playersLocations
+	 */
 	private boolean mrXIsBusted(Map<Colour, Integer> playersLocations) {
 		for(Colour player : playersLocations.keySet()) {
 			if(Utility.isPlayerDetective(player) && playersLocations.get(player).equals(playersLocations.get(Utility.getMrXColour()))) return true;

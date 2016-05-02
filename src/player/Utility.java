@@ -3,24 +3,41 @@ import java.util.*;
 import scotlandyard.*;
 
 public class Utility {
+	/**
+	 * Holds the colour of mr.X
+	 */
 	private static final Colour mrXColour = Colour.Black;
 	
+	/**
+	 * Checks if a player is mr.X or not
+	 * @param player
+	 * @return true is player is mr.X, false otherwise
+	 */
 	static boolean isPlayerMrX(Colour player) {
 		return mrXColour.equals(player); 
 	}
 	
+	/**
+	 * Checks if a player is a detective or not
+	 * @param player
+	 * @return true is player is a detective, false otherwise
+	 */
 	static boolean isPlayerDetective(Colour player) {
 		return !isPlayerMrX(player);
 	}
 	
+	/**
+	 * Gives the colour of mr.X
+	 * @return the colour of mr.X
+	 */
 	static Colour getMrXColour() {
 		return mrXColour;
 	}
 	
 	/**
 	 * Returns a list of the necessary tickets to perform a move
-	 * @param move
-	 * @return
+	 * @param move the move we want to perform
+	 * @return a list of the tickets necessary to perform the move
 	 */
 	static List<Ticket> getNecessaryTickets(Move move) {
 		List<Ticket> result = new ArrayList<Ticket>();
@@ -41,7 +58,7 @@ public class Utility {
 	 * Returns the end locations of a move
 	 * @param currentLocation
 	 * @param move
-	 * @return
+	 * @return the target location of a move
 	 */
 	static int getMoveEndLocation(int currentLocation, Move move) {
 		if(move instanceof MovePass) return currentLocation;

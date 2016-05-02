@@ -2,8 +2,6 @@ package player;
 
 import net.*;
 import scotlandyard.*;
-
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -13,16 +11,16 @@ import java.util.*;
  * provided here.
  */
 public class AIMasterRaceFactory implements PlayerFactory {
-
-	private final Colour mrXColour = Colour.Black; //making things more modular and stuff
-	private List<Spectator> aiPlayers = new ArrayList<Spectator>();
+	private List<Spectator> spectators = new ArrayList<Spectator>();
 	
     @Override
     public Player getPlayer(Colour colour, ScotlandYardView view, String mapFilename) {
     	AIMasterRace newPlayer;
-    	if(isMrX(colour)) newPlayer = new MrXPlayer(colour, view, mapFilename);
+    	//if player is mr.X, create a MrXPlayer instance
+    	//if player is a detective, create a DetectivePlayer instance
+    	if(Utility.isPlayerMrX(colour)) newPlayer = new MrXPlayer(colour, view, mapFilename);
     	else newPlayer = new DetectivePlayer(colour, view, mapFilename);
-    	//aiPlayers.add(newPlayer);
+    	//spectators.add(newPlayer); //add player as a spectator
         return newPlayer;
     }
 
@@ -33,16 +31,12 @@ public class AIMasterRaceFactory implements PlayerFactory {
 
     @Override
     public List<Spectator> getSpectators(ScotlandYardView view) {
-    	return aiPlayers;
+    	return spectators;
     }
 
     @Override
     public void finish() {
-        aiPlayers.clear();
-    }
-    
-    private boolean isMrX(Colour colour) {
-    	return colour.equals(mrXColour);
+        spectators.clear();
     }
 
 }

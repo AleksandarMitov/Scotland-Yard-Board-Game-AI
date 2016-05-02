@@ -17,9 +17,16 @@ import java.io.*;
  */
 public abstract class AIMasterRace implements Player, Spectator {
 	protected ScotlandYardView view;
-	protected ScotlandYardGraph graph; //holds game graph
-	protected Colour colour; //holds the player's colour
 	
+	/**
+	 * Holds current game map's graph
+	 */
+	protected ScotlandYardGraph graph;
+	
+	/**
+	 * The colour of this player
+	 */
+	protected Colour colour;
 	
     public AIMasterRace(Colour playerColour, ScotlandYardView view, String graphFilename){
     	this.view = view;
@@ -28,12 +35,14 @@ public abstract class AIMasterRace implements Player, Spectator {
     	System.out.println("Spawning AI player: " + colour);
     }
 
+    /**
+     * Implementing the player interface
+     */
     @Override
     public void notify(int location, List<Move> moves, Integer token, Receiver receiver) {
         System.out.println("It's " + colour + " player's turn");
     	System.out.println("Flexing AI muscles to come up with a move...");
         Move moveToPlay = chooseMove(location, moves);
-        if(moveToPlay.colour != colour) System.out.println("ERROR WRONG COLOUR!\n\n\n\n");;
         System.out.println("Piece of cake! Current location: " + location + ", Playing move: " + moveToPlay);
         receiver.playMove(moveToPlay, token);
     }
@@ -58,6 +67,11 @@ public abstract class AIMasterRace implements Player, Spectator {
     	System.out.println("Notifying player" + colour + "for move: " + move);
     }
     
+    /**
+     * Reads the given graph file and returns a ScotlandYardGraph instance populated with it
+     * @param graphFileName
+     * @return
+     */
     private ScotlandYardGraph generateGameGraph(String graphFileName) {
     	ScotlandYardGraphReader reader = new ScotlandYardGraphReader();
     	ScotlandYardGraph graph = null;
@@ -179,6 +193,13 @@ public abstract class AIMasterRace implements Player, Spectator {
         return possibleMoves;
     }
     
+    /**
+     * Returns a list of all the players on the map while also
+     * making sure they're in their correct order
+     * was forced to make one since the ScotlandYardView implementation was buggy
+     * @param view
+     * @return a list of all the players in their correct order
+     */
     protected List<Colour> getPlayersInOrder(ScotlandYardView view) {
     	List<Colour> inOrder = new ArrayList<Colour>();
     	inOrder.add(Utility.getMrXColour());
