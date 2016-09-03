@@ -1,27 +1,3 @@
-# CWK6:
-
-In this coursework, you will make an Artificial Intelligence (AI) to play the game and also finish off a nicer client than the one we provided in the last coursework. That sounds cool, right? Well, let's turn it up a notch. We have provided a Matchmaker and Judge along with the messaging side of the AI so you can play Scotland Yard over the network! We have also provided the graphical side of the client, but we need you to wire it up.
-
-
-***
-
-**TODO:** Create a repository containing the following code:
-
-* [cw6.zip](cw6.zip)
-
-***
-
-
-As well as the aforementioned client, which is found in the `client` directory, the project structure has changed a bit since the last coursework. Much of the `src` directory from the last coursework is now packaged in an included `.jar` file so you won't have access to many of those `.java` files. Also hidden  in the `.jar` are a number of unfamiliar components for the project, lets look at what's new:
-
-![System diagram](Diagram.png)
-
-So, what do all of those blocks mean? Let's start with the Matchmaker. The Matchmaker is a Java server that clients connect to when they want to be placed into a game. Who they should play against is decided by the Matchmaker based on their performance so far. To this end, the Matchmaker also records the scores for each team in the game. We are using the Elo rating system that, if you're interested, can be found [here](https://en.wikipedia.org/wiki/Elo_rating_system). The Judge is also a Java server that uses an extended model which allows it to judge multiple games at the same time. But, how does the extended model differ from the normal model, I hear you say! Well, because the Judge must judge multiple games, we have added a few methods to save the current game state and load in a new one.
-
-Okay, so that explains the bottom half of the diagram, what about the top? The AI block is actually another Java server, the difference here is that you will host this on your own computer (or a lab machine) come competition day, and only your client will connect to it. The idea is that when it's time for an AI player to make a move, your client will request a move from your connected AI and forward it on to the Judge.
-
-You might be wondering how all of these servers are communicating. They use a number of message objects that are converted to strings and sent over the network. You will not need to deal with the networking but *will* be handling the messages after they arrive at the client. As such we have included the list of all the messages used to communicate between the components of the system (in the appendix below). This is meant to be reference for when you are wiring up the JavaScript client, so you do not need to study it now.
-
 # Wiring up the client
 
 As previously stated, the first part of this coursework will involve implementing some message handling in the client so that we can use it to play a game. The client is written in JavaScript and runs in the browser as a web application. As such, all you need to do to start the client is to open up `index.html` located in the `client` folder in your browser. Note: your browser must support WebSockets and the HTML 5 canvas element, if it currently does not, please update it.
