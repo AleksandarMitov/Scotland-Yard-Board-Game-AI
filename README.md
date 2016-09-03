@@ -1,3 +1,4 @@
+# Scotland Yard board game AI
 # Wiring up the client
 
 As previously stated, the first part of this coursework will involve implementing some message handling in the client so that we can use it to play a game. The client is written in JavaScript and runs in the browser as a web application. As such, all you need to do to start the client is to open up `index.html` located in the `client` folder in your browser. Note: your browser must support WebSockets and the HTML 5 canvas element, if it currently does not, please update it.
